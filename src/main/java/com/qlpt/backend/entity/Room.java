@@ -1,0 +1,41 @@
+package com.qlpt.backend.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.UUID;
+
+@Entity
+@Table(name = "rooms")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Room {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "room_number", nullable = false)
+    private String roomNumber;
+
+    @Column(name = "base_price", nullable = false)
+    private double basePrice;
+
+    @Column(name = "current_electricity_index", nullable = false)
+    private double currentElectricityIndex;
+
+    @Column(name = "current_water_index", nullable = false)
+    private double currentWaterIndex;
+
+    @Column(name = "max_people", nullable = false)
+    private int maxPeople;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RoomStatus status; // VACANT, OCCUPIED
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "boarding_house_id", nullable = false)
+    private BoardingHouse boardingHouse;
+}
