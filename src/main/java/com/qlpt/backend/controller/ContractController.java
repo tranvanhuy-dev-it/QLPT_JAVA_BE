@@ -48,6 +48,18 @@ public class ContractController {
         return ResponseEntity.ok(ContractResponse.fromEntity(terminated));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<ContractResponse> updateContract(
+            @PathVariable UUID id,
+            @RequestBody java.util.Map<String, Object> body,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User landlord = userDetails.getUser();
+        int numberOfTenants = ((Number) body.get("numberOfTenants")).intValue();
+        Contract updated = contractService.updateContract(id, numberOfTenants, landlord);
+        return ResponseEntity.ok(ContractResponse.fromEntity(updated));
+    }
+
     @GetMapping
     public ResponseEntity<Page<ContractResponse>> getContracts(
             @AuthenticationPrincipal CustomUserDetails userDetails,

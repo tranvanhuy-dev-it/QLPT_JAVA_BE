@@ -126,6 +126,31 @@ public class ContractService {
         return contract;
     }
 
+    @Transactional
+    public Contract updateContract(UUID id, int numberOfTenants, User landlord) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng"));
+
+        if (!contract.getRoom().getBoardingHouse().getLandlord().getId().equals(landlord.getId())) {
+            throw new RuntimeException("Bạn không có quyền chỉnh sửa hợp đồng này");
+        }
+
+        if (contract.getStatus() != ContractStatus.ACTIVE) {
+            throw new RuntimeException("Hợp đồng không còn hoạt động, không thể chỉnh sửa");
+        }
+
+        if (numberOfTenants < 1) {
+            throw new RuntimeException("Số người ở phải lớn hơn hoặc bằng 1");
+        }
+
+        if (numberOfTenants > contract.getRoom().getMaxPeople()) {
+            throw new RuntimeException("Số người ở vượt quá sức chứa tối đa của phòng (" + contract.getRoom().getMaxPeople() + " người)");
+        }
+
+        contract.setNumberOfTenants(numberOfTenants);
+        return contractRepository.save(contract);
+    }
+
     public Page<Contract> getContractsByLandlord(User landlord, Pageable pageable) {
         return contractRepository.findByRoomBoardingHouseLandlordId(landlord.getId(), pageable);
     }
