@@ -31,5 +31,6 @@ public class ExtraFee {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "boarding_house_id", nullable = false)
+    @JsonIgnore
     private BoardingHouse boardingHouse;
 }

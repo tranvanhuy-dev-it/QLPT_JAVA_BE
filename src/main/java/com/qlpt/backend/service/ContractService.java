@@ -69,7 +69,7 @@ public class ContractService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .deposit(request.getDeposit())
-                .contractedRoomPrice(request.getContractedRoomPrice())
+                .contractedRoomPrice(room.getBasePrice())
                 .billingMode(request.getBillingMode())
                 .fixedBillingDay(request.getFixedBillingDay())
                 .numberOfTenants(request.getNumberOfTenants())
@@ -91,7 +91,7 @@ public class ContractService {
                 ContractExtraFee contractExtraFee = ContractExtraFee.builder()
                         .contract(savedContract)
                         .extraFee(extraFee)
-                        .customPrice(override.getCustomPrice())
+                        .customPrice(extraFee.getDefaultPrice())
                         .build();
 
                 contractExtraFeeRepository.save(contractExtraFee);

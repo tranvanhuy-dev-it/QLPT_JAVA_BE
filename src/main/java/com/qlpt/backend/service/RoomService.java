@@ -39,6 +39,11 @@ public class RoomService {
     @Transactional
     public BoardingHouse createBoardingHouse(BoardingHouse boardingHouse, User landlord) {
         boardingHouse.setLandlord(landlord);
+        if (boardingHouse.getExtraFees() != null) {
+            for (ExtraFee ef : boardingHouse.getExtraFees()) {
+                ef.setBoardingHouse(boardingHouse);
+            }
+        }
         return boardingHouseRepository.save(boardingHouse);
     }
 
@@ -65,6 +70,15 @@ public class RoomService {
         boardingHouse.setDefaultElectricityRate(bhDetails.getDefaultElectricityRate());
         boardingHouse.setDefaultWaterRate(bhDetails.getDefaultWaterRate());
         boardingHouse.setWaterBillingType(bhDetails.getWaterBillingType());
+        
+        // Cập nhật phụ phí dịch vụ qua JPA Cascade
+        boardingHouse.getExtraFees().clear();
+        if (bhDetails.getExtraFees() != null) {
+            for (ExtraFee ef : bhDetails.getExtraFees()) {
+                ef.setBoardingHouse(boardingHouse);
+                boardingHouse.getExtraFees().add(ef);
+            }
+        }
         
         return boardingHouseRepository.save(boardingHouse);
     }
