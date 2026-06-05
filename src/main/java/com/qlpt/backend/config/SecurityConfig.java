@@ -47,7 +47,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",
-            "https://tvhquanlyphongtro.vercel.app"
+            "https://tvhquanlyphongtro.vercel.app",
+             "https://phongtro.tranvanhuy.io.vn"
         )); // Cho phép Vue local và Vue production trên Vercel
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
