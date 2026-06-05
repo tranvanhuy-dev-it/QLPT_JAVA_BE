@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://metro.proxy.rlwy.net:47060/railway?sslmode=require
+    url: jdbc:postgresql://zephyr.proxy.rlwy.net:42378/railway?sslmode=require
     username: postgres
-    password: GmIujdkguBazckHXKNBtOMgGopaWsUDZ
+    password: YRSOJGiOGURXjtoPTZDHVstTgLtkttbJ
     driver-class-name: org.postgresql.Driver
 
   jpa:

@@ -1,6 +1,7 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
+import com.qlpt.backend.dto.UserResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.UserService;
 import org.springframework.data.domain.Page;
@@ -25,18 +26,20 @@ public class AdminController {
     }
 
     @GetMapping("/landlords")
-    public ResponseEntity<Page<User>> getAllLandlords(
+    public ResponseEntity<Page<UserResponse>> getAllLandlords(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10) Pageable pageable) {
         User admin = userDetails.getUser();
-        return ResponseEntity.ok(userService.getAllLandlords(admin, pageable));
+        Page<User> landlords = userService.getAllLandlords(admin, pageable);
+        return ResponseEntity.ok(landlords.map(UserResponse::fromEntity));
     }
 
     @PostMapping("/landlords/{id}/toggle")
-    public ResponseEntity<User> toggleLandlordStatus(
+    public ResponseEntity<UserResponse> toggleLandlordStatus(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User admin = userDetails.getUser();
-        return ResponseEntity.ok(userService.toggleUserStatus(id, admin));
+        User toggled = userService.toggleUserStatus(id, admin);
+        return ResponseEntity.ok(UserResponse.fromEntity(toggled));
     }
 }

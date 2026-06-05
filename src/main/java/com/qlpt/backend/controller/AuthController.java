@@ -5,6 +5,7 @@ import com.qlpt.backend.dto.JwtResponse;
 import com.qlpt.backend.dto.LoginRequest;
 import com.qlpt.backend.dto.RegisterRequest;
 import com.qlpt.backend.dto.TenantCreateRequest;
+import com.qlpt.backend.dto.UserResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -24,12 +25,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         if (request.getRole() == com.qlpt.backend.entity.Role.TENANT) {
             throw new RuntimeException("Người thuê phải do chủ trọ cấp tài khoản, không thể tự đăng ký");
         }
         User user = authService.registerUser(request);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
 
     @PostMapping("/login")
@@ -40,11 +41,11 @@ public class AuthController {
 
     @PostMapping("/create-tenant")
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<User> createTenant(
+    public ResponseEntity<UserResponse> createTenant(
             @Valid @RequestBody TenantCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
         User tenant = authService.createTenantAccount(request, landlord);
-        return ResponseEntity.ok(tenant);
+        return ResponseEntity.ok(UserResponse.fromEntity(tenant));
     }
 }

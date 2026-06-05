@@ -1,6 +1,9 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
+import com.qlpt.backend.dto.BoardingHouseResponse;
+import com.qlpt.backend.dto.ExtraFeeResponse;
+import com.qlpt.backend.dto.RoomResponse;
 import com.qlpt.backend.entity.BoardingHouse;
 import com.qlpt.backend.entity.ExtraFee;
 import com.qlpt.backend.entity.Room;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -33,36 +37,40 @@ public class RoomController {
     // ==========================================
 
     @PostMapping("/boarding-houses")
-    public ResponseEntity<BoardingHouse> createBoardingHouse(
+    public ResponseEntity<BoardingHouseResponse> createBoardingHouse(
             @RequestBody BoardingHouse boardingHouse,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.createBoardingHouse(boardingHouse, landlord));
+        BoardingHouse created = roomService.createBoardingHouse(boardingHouse, landlord);
+        return ResponseEntity.ok(BoardingHouseResponse.fromEntity(created));
     }
 
     @GetMapping("/boarding-houses")
-    public ResponseEntity<Page<BoardingHouse>> getBoardingHouses(
+    public ResponseEntity<Page<BoardingHouseResponse>> getBoardingHouses(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.getBoardingHousesByLandlord(landlord, pageable));
+        Page<BoardingHouse> houses = roomService.getBoardingHousesByLandlord(landlord, pageable);
+        return ResponseEntity.ok(houses.map(BoardingHouseResponse::fromEntity));
     }
 
     @GetMapping("/boarding-houses/{id}")
-    public ResponseEntity<BoardingHouse> getBoardingHouse(
+    public ResponseEntity<BoardingHouseResponse> getBoardingHouse(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.getBoardingHouseById(id, landlord));
+        BoardingHouse house = roomService.getBoardingHouseById(id, landlord);
+        return ResponseEntity.ok(BoardingHouseResponse.fromEntity(house));
     }
 
     @PutMapping("/boarding-houses/{id}")
-    public ResponseEntity<BoardingHouse> updateBoardingHouse(
+    public ResponseEntity<BoardingHouseResponse> updateBoardingHouse(
             @PathVariable UUID id,
             @RequestBody BoardingHouse boardingHouse,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.updateBoardingHouse(id, boardingHouse, landlord));
+        BoardingHouse updated = roomService.updateBoardingHouse(id, boardingHouse, landlord);
+        return ResponseEntity.ok(BoardingHouseResponse.fromEntity(updated));
     }
 
     @DeleteMapping("/boarding-houses/{id}")
@@ -79,46 +87,51 @@ public class RoomController {
     // ==========================================
 
     @PostMapping("/boarding-houses/{bhId}/rooms")
-    public ResponseEntity<Room> createRoom(
+    public ResponseEntity<RoomResponse> createRoom(
             @PathVariable UUID bhId,
             @RequestBody Room room,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.createRoom(bhId, room, landlord));
+        Room created = roomService.createRoom(bhId, room, landlord);
+        return ResponseEntity.ok(RoomResponse.fromEntity(created));
     }
 
     @GetMapping("/boarding-houses/{bhId}/rooms")
-    public ResponseEntity<Page<Room>> getRoomsByBoardingHouse(
+    public ResponseEntity<Page<RoomResponse>> getRoomsByBoardingHouse(
             @PathVariable UUID bhId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.getRoomsByBoardingHouse(bhId, landlord, pageable));
+        Page<Room> rooms = roomService.getRoomsByBoardingHouse(bhId, landlord, pageable);
+        return ResponseEntity.ok(rooms.map(RoomResponse::fromEntity));
     }
 
     @GetMapping
-    public ResponseEntity<Page<Room>> getAllRooms(
+    public ResponseEntity<Page<RoomResponse>> getAllRooms(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.getRoomsByLandlord(landlord, pageable));
+        Page<Room> rooms = roomService.getRoomsByLandlord(landlord, pageable);
+        return ResponseEntity.ok(rooms.map(RoomResponse::fromEntity));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Room> getRoomById(
+    public ResponseEntity<RoomResponse> getRoomById(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.getRoomById(id, landlord));
+        Room room = roomService.getRoomById(id, landlord);
+        return ResponseEntity.ok(RoomResponse.fromEntity(room));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Room> updateRoom(
+    public ResponseEntity<RoomResponse> updateRoom(
             @PathVariable UUID id,
             @RequestBody Room room,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.updateRoom(id, room, landlord));
+        Room updated = roomService.updateRoom(id, room, landlord);
+        return ResponseEntity.ok(RoomResponse.fromEntity(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -135,20 +148,25 @@ public class RoomController {
     // ==========================================
 
     @PostMapping("/boarding-houses/{bhId}/extra-fees")
-    public ResponseEntity<ExtraFee> createExtraFee(
+    public ResponseEntity<ExtraFeeResponse> createExtraFee(
             @PathVariable UUID bhId,
             @RequestBody ExtraFee extraFee,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.createExtraFee(bhId, extraFee, landlord));
+        ExtraFee created = roomService.createExtraFee(bhId, extraFee, landlord);
+        return ResponseEntity.ok(ExtraFeeResponse.fromEntity(created));
     }
 
     @GetMapping("/boarding-houses/{bhId}/extra-fees")
-    public ResponseEntity<List<ExtraFee>> getExtraFees(
+    public ResponseEntity<List<ExtraFeeResponse>> getExtraFees(
             @PathVariable UUID bhId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(roomService.getExtraFeesByBoardingHouse(bhId, landlord));
+        List<ExtraFee> fees = roomService.getExtraFeesByBoardingHouse(bhId, landlord);
+        List<ExtraFeeResponse> dtos = fees.stream()
+                .map(ExtraFeeResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @DeleteMapping("/extra-fees/{id}")

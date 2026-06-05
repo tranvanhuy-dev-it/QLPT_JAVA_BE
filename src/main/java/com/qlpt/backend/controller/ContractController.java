@@ -2,6 +2,7 @@ package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
 import com.qlpt.backend.dto.ContractCreateRequest;
+import com.qlpt.backend.dto.ContractResponse;
 import com.qlpt.backend.entity.Contract;
 import com.qlpt.backend.entity.Role;
 import com.qlpt.backend.entity.User;
@@ -29,41 +30,46 @@ public class ContractController {
 
     @PostMapping
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<Contract> createContract(
+    public ResponseEntity<ContractResponse> createContract(
             @Valid @RequestBody ContractCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(contractService.createContract(request, landlord));
+        Contract created = contractService.createContract(request, landlord);
+        return ResponseEntity.ok(ContractResponse.fromEntity(created));
     }
 
     @PostMapping("/{id}/terminate")
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<Contract> terminateContract(
+    public ResponseEntity<ContractResponse> terminateContract(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
-        return ResponseEntity.ok(contractService.terminateContract(id, landlord));
+        Contract terminated = contractService.terminateContract(id, landlord);
+        return ResponseEntity.ok(ContractResponse.fromEntity(terminated));
     }
 
     @GetMapping
-    public ResponseEntity<Page<Contract>> getContracts(
+    public ResponseEntity<Page<ContractResponse>> getContracts(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10) Pageable pageable) {
         User user = userDetails.getUser();
+        Page<Contract> contracts;
         if (user.getRole() == Role.LANDLORD) {
-            return ResponseEntity.ok(contractService.getContractsByLandlord(user, pageable));
+            contracts = contractService.getContractsByLandlord(user, pageable);
         } else if (user.getRole() == Role.TENANT) {
-            return ResponseEntity.ok(contractService.getContractsByTenant(user, pageable));
+            contracts = contractService.getContractsByTenant(user, pageable);
         } else {
             throw new RuntimeException("Tài khoản của bạn không được cấp quyền thực hiện chức năng này");
         }
+        return ResponseEntity.ok(contracts.map(ContractResponse::fromEntity));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Contract> getContract(
+    public ResponseEntity<ContractResponse> getContract(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        return ResponseEntity.ok(contractService.getContractById(id, user));
+        Contract contract = contractService.getContractById(id, user);
+        return ResponseEntity.ok(ContractResponse.fromEntity(contract));
     }
 }

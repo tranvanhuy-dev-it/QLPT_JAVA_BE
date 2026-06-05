@@ -1,6 +1,7 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
+import com.qlpt.backend.dto.UserResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.UserService;
 import org.springframework.data.domain.Page;
@@ -24,22 +25,18 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<User> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        // Tránh trả về mật khẩu
-        user.setPassword(null);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
 
     @GetMapping("/tenants")
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<Page<User>> getMyTenants(
+    public ResponseEntity<Page<UserResponse>> getMyTenants(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
         Page<User> tenants = userService.getTenantsByLandlord(landlord, pageable);
-        // Tránh trả về mật khẩu cho danh sách
-        tenants.forEach(t -> t.setPassword(null));
-        return ResponseEntity.ok(tenants);
+        return ResponseEntity.ok(tenants.map(UserResponse::fromEntity));
     }
 }
