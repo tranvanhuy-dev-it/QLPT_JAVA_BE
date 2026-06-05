@@ -16,7 +16,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
+import com.qlpt.backend.dto.ContractExtraFeeResponse;
+import com.qlpt.backend.entity.ContractExtraFee;
 
 @RestController
 @RequestMapping("/api/contracts")
@@ -83,5 +86,17 @@ public class ContractController {
         User user = userDetails.getUser();
         Contract contract = contractService.getContractById(id, user);
         return ResponseEntity.ok(ContractResponse.fromEntity(contract));
+    }
+
+    @GetMapping("/{id}/extra-fees")
+    public ResponseEntity<List<ContractExtraFeeResponse>> getContractExtraFees(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        List<ContractExtraFee> fees = contractService.getContractExtraFees(id, user);
+        List<ContractExtraFeeResponse> response = fees.stream()
+                .map(ContractExtraFeeResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 }

@@ -173,4 +173,18 @@ public class ContractService {
     public Page<Contract> getContractsByTenant(User tenant, Pageable pageable) {
         return contractRepository.findByTenantId(tenant.getId(), pageable);
     }
+
+    public List<ContractExtraFee> getContractExtraFees(UUID contractId, User user) {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng"));
+        
+        boolean isLandlord = contract.getRoom().getBoardingHouse().getLandlord().getId().equals(user.getId());
+        boolean isTenant = contract.getTenant().getId().equals(user.getId());
+        
+        if (!isLandlord && !isTenant && user.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Bạn không có quyền xem thông tin phụ phí của hợp đồng này");
+        }
+        
+        return contractExtraFeeRepository.findByContractId(contractId);
+    }
 }
