@@ -58,7 +58,7 @@ public class InvoiceController {
     @GetMapping
     public ResponseEntity<Page<InvoiceResponse>> getInvoices(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "invoiceDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         User user = userDetails.getUser();
         Page<Invoice> invoices;
         if (user.getRole() == Role.LANDLORD) {

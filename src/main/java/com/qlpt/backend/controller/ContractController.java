@@ -66,7 +66,7 @@ public class ContractController {
     @GetMapping
     public ResponseEntity<Page<ContractResponse>> getContracts(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "startDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         User user = userDetails.getUser();
         Page<Contract> contracts;
         if (user.getRole() == Role.LANDLORD) {
