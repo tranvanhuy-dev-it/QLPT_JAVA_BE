@@ -13,7 +13,8 @@ public record BoardingHouseResponse(
     double defaultElectricityRate,
     double defaultWaterRate,
     WaterBillingType waterBillingType,
-    List<ExtraFeeResponse> extraFees
+    List<ExtraFeeResponse> extraFees,
+    UserResponse landlord
 ) {
     public static BoardingHouseResponse fromEntity(BoardingHouse bh) {
         if (bh == null) return null;
@@ -30,7 +31,8 @@ public record BoardingHouseResponse(
             bh.getDefaultElectricityRate(),
             bh.getDefaultWaterRate(),
             bh.getWaterBillingType(),
-            fees
+            fees,
+            UserResponse.fromEntity(bh.getLandlord())
         );
     }
 }

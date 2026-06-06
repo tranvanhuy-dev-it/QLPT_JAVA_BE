@@ -57,6 +57,9 @@ public class AuthService {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
 
+        // Landlords must be approved by admin before logging in, so status is PENDING.
+        String status = (request.getRole() == Role.LANDLORD) ? "PENDING" : "ACTIVE";
+
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -64,24 +67,33 @@ public class AuthService {
                 .phone(request.getPhone())
                 .fullName(request.getFullName())
                 .role(request.getRole())
-                .status("ACTIVE")
+                .status(status)
                 .build();
 
         return userRepository.save(user);
     }
 
     public JwtResponse authenticateUser(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = tokenProvider.generateToken(authentication);
 
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userDetails.getUser();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            User user = userDetails.getUser();
 
-        return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getRole().name());
+            return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getRole().name());
+        } catch (org.springframework.security.authentication.DisabledException
+                 | org.springframework.security.authentication.LockedException ex) {
+            throw new RuntimeException("Tài khoản của bạn chưa được kích hoạt hoặc đã bị khóa. Vui lòng liên hệ Admin!");
+        } catch (org.springframework.security.authentication.BadCredentialsException ex) {
+            throw new RuntimeException("Tên đăng nhập hoặc mật khẩu không chính xác!");
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            throw new RuntimeException("Đăng nhập thất bại: " + ex.getMessage());
+        }
     }
 
     @Transactional
