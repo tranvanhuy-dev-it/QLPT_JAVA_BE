@@ -64,25 +64,27 @@ public class InvoiceService {
         // ==========================================
         // 1. TÍNH TIỀN PHÒNG (Room Price Proration)
         // ==========================================
-        double roomPrice;
-        if (contract.getBillingMode() == BillingMode.BY_RENTAL_DAYS) {
-            // Tính theo tháng thuê mặc định trọn vẹn
-            roomPrice = contract.getContractedRoomPrice();
-        } else {
-            // FIXED_DATE_OF_MONTH - Ngày cố định hàng tháng
-            // Kiểm tra xem kỳ này có phải là 1 tháng trọn vẹn không
-            boolean isFullMonth = start.getDayOfMonth() == contract.getFixedBillingDay() 
-                    && end.getDayOfMonth() == contract.getFixedBillingDay() 
-                    && ChronoUnit.DAYS.between(start, end) >= 28;
-
-            if (isFullMonth) {
+        double roomPrice = 0;
+        if (request.getExcludeRoomPrice() == null || !request.getExcludeRoomPrice()) {
+            if (contract.getBillingMode() == BillingMode.BY_RENTAL_DAYS) {
+                // Tính theo tháng thuê mặc định trọn vẹn
                 roomPrice = contract.getContractedRoomPrice();
             } else {
-                // Ở chưa đủ tháng -> Chia tiền phòng theo ngày thực tế ở
-                long stayedDays = ChronoUnit.DAYS.between(start, end);
-                int daysInStartMonth = start.lengthOfMonth();
-                double dailyRate = contract.getContractedRoomPrice() / daysInStartMonth;
-                roomPrice = Math.round(dailyRate * stayedDays); // Làm tròn tiền phòng
+                // FIXED_DATE_OF_MONTH - Ngày cố định hàng tháng
+                // Kiểm tra xem kỳ này có phải là 1 tháng trọn vẹn không
+                boolean isFullMonth = start.getDayOfMonth() == contract.getFixedBillingDay() 
+                        && end.getDayOfMonth() == contract.getFixedBillingDay() 
+                        && ChronoUnit.DAYS.between(start, end) >= 28;
+
+                if (isFullMonth) {
+                    roomPrice = contract.getContractedRoomPrice();
+                } else {
+                    // Ở chưa đủ tháng -> Chia tiền phòng theo ngày thực tế ở
+                    long stayedDays = ChronoUnit.DAYS.between(start, end);
+                    int daysInStartMonth = start.lengthOfMonth();
+                    double dailyRate = contract.getContractedRoomPrice() / daysInStartMonth;
+                    roomPrice = Math.round(dailyRate * stayedDays); // Làm tròn tiền phòng
+                }
             }
         }
 
@@ -147,34 +149,36 @@ public class InvoiceService {
         // ==========================================
         // 4. TÍNH CÁC PHỤ PHÍ DỊCH VỤ KHÁC (Extra Fees)
         // ==========================================
-        List<ContractExtraFee> contractExtraFees = contractExtraFeeRepository.findByContractId(contract.getId());
         List<InvoiceItem> invoiceItems = new ArrayList<>();
         double extraFeesTotal = 0;
 
-        for (ContractExtraFee cef : contractExtraFees) {
-            ExtraFee ef = cef.getExtraFee();
-            double quantity = 1;
-            if (ef.getUnitType() == ExtraFeeUnitType.FIXED_PER_PERSON) {
-                quantity = contract.getNumberOfTenants();
+        if (request.getExcludeExtraFees() == null || !request.getExcludeExtraFees()) {
+            List<ContractExtraFee> contractExtraFees = contractExtraFeeRepository.findByContractId(contract.getId());
+            for (ContractExtraFee cef : contractExtraFees) {
+                ExtraFee ef = cef.getExtraFee();
+                double quantity = 1;
+                if (ef.getUnitType() == ExtraFeeUnitType.FIXED_PER_PERSON) {
+                    quantity = contract.getNumberOfTenants();
+                }
+
+                double subtotal = Math.round(cef.getCustomPrice() * quantity);
+                extraFeesTotal += subtotal;
+
+                InvoiceItem item = InvoiceItem.builder()
+                        .invoice(savedInvoice)
+                        .name(ef.getName())
+                        .price(cef.getCustomPrice())
+                        .quantity(quantity)
+                        .subtotal(subtotal)
+                        .build();
+
+                invoiceItems.add(item);
             }
 
-            double subtotal = Math.round(cef.getCustomPrice() * quantity);
-            extraFeesTotal += subtotal;
-
-            InvoiceItem item = InvoiceItem.builder()
-                    .invoice(savedInvoice)
-                    .name(ef.getName())
-                    .price(cef.getCustomPrice())
-                    .quantity(quantity)
-                    .subtotal(subtotal)
-                    .build();
-
-            invoiceItems.add(item);
-        }
-
-        // Lưu chi tiết các phụ phí dịch vụ
-        if (!invoiceItems.isEmpty()) {
-            invoiceItemRepository.saveAll(invoiceItems);
+            // Lưu chi tiết các phụ phí dịch vụ
+            if (!invoiceItems.isEmpty()) {
+                invoiceItemRepository.saveAll(invoiceItems);
+            }
         }
 
         // Cập nhật lại tổng tiền bao gồm phụ phí dịch vụ

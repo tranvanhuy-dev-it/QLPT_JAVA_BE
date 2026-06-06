@@ -24,4 +24,8 @@ public class InvoiceCreateRequest {
     private double newElectricityIndex; // Chỉ số điện mới (tháng này)
 
     private double newWaterIndex; // Chỉ số nước mới (tháng này - có thể bằng 0 nếu tính tiền nước cố định)
+
+    private Boolean excludeRoomPrice; // Chỉ thu điện nước, không thu tiền phòng (phục vụ thu kỳ cuối)
+
+    private Boolean excludeExtraFees; // Không thu các phụ phí dịch vụ tháng tiếp theo
 }
