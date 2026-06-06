@@ -70,6 +70,7 @@ public class RoomService {
         boardingHouse.setDefaultElectricityRate(bhDetails.getDefaultElectricityRate());
         boardingHouse.setDefaultWaterRate(bhDetails.getDefaultWaterRate());
         boardingHouse.setWaterBillingType(bhDetails.getWaterBillingType());
+        boardingHouse.setBillingTiming(bhDetails.getBillingTiming());
         
         // Cập nhật phụ phí dịch vụ qua JPA Cascade
         boardingHouse.getExtraFees().clear();

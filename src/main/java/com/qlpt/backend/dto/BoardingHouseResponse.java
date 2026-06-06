@@ -14,7 +14,8 @@ public record BoardingHouseResponse(
     double defaultWaterRate,
     WaterBillingType waterBillingType,
     List<ExtraFeeResponse> extraFees,
-    UserResponse landlord
+    UserResponse landlord,
+    com.qlpt.backend.entity.BillingTiming billingTiming
 ) {
     public static BoardingHouseResponse fromEntity(BoardingHouse bh) {
         if (bh == null) return null;
@@ -32,7 +33,8 @@ public record BoardingHouseResponse(
             bh.getDefaultWaterRate(),
             bh.getWaterBillingType(),
             fees,
-            UserResponse.fromEntity(bh.getLandlord())
+            UserResponse.fromEntity(bh.getLandlord()),
+            bh.getBillingTiming()
         );
     }
 }

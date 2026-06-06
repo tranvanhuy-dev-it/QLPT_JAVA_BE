@@ -40,6 +40,14 @@ public class BoardingHouse {
     @JoinColumn(name = "landlord_id", nullable = false)
     private User landlord;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "billing_timing")
+    private BillingTiming billingTiming;
+
+    public BillingTiming getBillingTiming() {
+        return billingTiming != null ? billingTiming : BillingTiming.PREPAID;
+    }
+
     @OneToMany(mappedBy = "boardingHouse", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude
