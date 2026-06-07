@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Entity
-@Table(name = "boarding_houses")
+@Table(name = "boarding_houses", indexes = {
+    @Index(name = "idx_boarding_houses_landlord_id", columnList = "landlord_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

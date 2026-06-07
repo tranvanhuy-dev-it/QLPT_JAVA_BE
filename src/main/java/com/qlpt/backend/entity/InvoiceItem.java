@@ -7,7 +7,9 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "invoice_items")
+@Table(name = "invoice_items", indexes = {
+    @Index(name = "idx_invoice_items_invoice_id", columnList = "invoice_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

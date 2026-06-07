@@ -6,7 +6,9 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "rooms")
+@Table(name = "rooms", indexes = {
+    @Index(name = "idx_rooms_boarding_house_id", columnList = "boarding_house_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
