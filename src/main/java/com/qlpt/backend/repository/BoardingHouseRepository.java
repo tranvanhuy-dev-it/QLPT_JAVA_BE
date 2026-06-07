@@ -7,10 +7,14 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface BoardingHouseRepository extends JpaRepository<BoardingHouse, UUID> {
+    @EntityGraph(attributePaths = {"landlord", "extraFees"})
+    Optional<BoardingHouse> findWithDetailsById(UUID id);
+
     @EntityGraph(attributePaths = {"landlord"})
     Page<BoardingHouse> findByLandlordId(UUID landlordId, Pageable pageable);
 }

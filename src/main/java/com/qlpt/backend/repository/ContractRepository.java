@@ -18,6 +18,9 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
     Optional<Contract> findByRoomIdAndStatus(UUID roomId, ContractStatus status);
 
     @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord"})
+    Optional<Contract> findWithDetailsById(UUID id);
+
+    @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord"})
     Page<Contract> findByTenantId(UUID tenantId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord"})

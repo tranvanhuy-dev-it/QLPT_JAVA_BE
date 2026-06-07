@@ -222,16 +222,19 @@ public class InvoiceService {
         return invoiceRepository.save(invoice);
     }
 
+    @Transactional(readOnly = true)
     public Page<Invoice> getInvoicesByLandlord(User landlord, Pageable pageable) {
         return invoiceRepository.findByContractRoomBoardingHouseLandlordId(landlord.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<Invoice> getInvoicesByTenant(User tenant, Pageable pageable) {
         return invoiceRepository.findByContractTenantId(tenant.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public Invoice getInvoiceById(UUID invoiceId, User user) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findWithDetailsById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
 
         boolean isLandlord = invoice.getContract().getRoom().getBoardingHouse().getLandlord().getId().equals(user.getId());
@@ -244,6 +247,7 @@ public class InvoiceService {
         return invoice;
     }
 
+    @Transactional(readOnly = true)
     public List<InvoiceItem> getInvoiceItems(UUID invoiceId, User user) {
         // Tải hóa đơn để kiểm tra quyền truy cập trước
         getInvoiceById(invoiceId, user);

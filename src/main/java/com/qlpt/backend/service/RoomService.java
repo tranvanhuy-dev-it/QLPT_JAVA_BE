@@ -47,12 +47,14 @@ public class RoomService {
         return boardingHouseRepository.save(boardingHouse);
     }
 
+    @Transactional(readOnly = true)
     public Page<BoardingHouse> getBoardingHousesByLandlord(User landlord, Pageable pageable) {
         return boardingHouseRepository.findByLandlordId(landlord.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public BoardingHouse getBoardingHouseById(UUID id, User landlord) {
-        BoardingHouse boardingHouse = boardingHouseRepository.findById(id)
+        BoardingHouse boardingHouse = boardingHouseRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dãy trọ"));
         
         if (!boardingHouse.getLandlord().getId().equals(landlord.getId())) {
@@ -102,18 +104,21 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    @Transactional(readOnly = true)
     public Page<Room> getRoomsByBoardingHouse(UUID boardingHouseId, User landlord, Pageable pageable) {
         // Validation check for landlord access
         getBoardingHouseById(boardingHouseId, landlord);
         return roomRepository.findByBoardingHouseId(boardingHouseId, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<Room> getRoomsByLandlord(User landlord, Pageable pageable) {
         return roomRepository.findByBoardingHouseLandlordId(landlord.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public Room getRoomById(UUID roomId, User landlord) {
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findWithDetailsById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phòng trọ"));
         
         if (!room.getBoardingHouse().getLandlord().getId().equals(landlord.getId())) {
@@ -154,6 +159,7 @@ public class RoomService {
         return extraFeeRepository.save(extraFee);
     }
 
+    @Transactional(readOnly = true)
     public List<ExtraFee> getExtraFeesByBoardingHouse(UUID boardingHouseId, User landlord) {
         getBoardingHouseById(boardingHouseId, landlord);
         return extraFeeRepository.findByBoardingHouseId(boardingHouseId);

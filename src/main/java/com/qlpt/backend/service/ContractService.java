@@ -156,12 +156,14 @@ public class ContractService {
         return contractRepository.save(contract);
     }
 
+    @Transactional(readOnly = true)
     public Page<Contract> getContractsByLandlord(User landlord, Pageable pageable) {
         return contractRepository.findByRoomBoardingHouseLandlordId(landlord.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public Contract getContractById(UUID contractId, User user) {
-        Contract contract = contractRepository.findById(contractId)
+        Contract contract = contractRepository.findWithDetailsById(contractId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng"));
 
         // Allow landlord or tenant of this contract to view it
@@ -175,12 +177,14 @@ public class ContractService {
         return contract;
     }
 
+    @Transactional(readOnly = true)
     public Page<Contract> getContractsByTenant(User tenant, Pageable pageable) {
         return contractRepository.findByTenantId(tenant.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public List<ContractExtraFee> getContractExtraFees(UUID contractId, User user) {
-        Contract contract = contractRepository.findById(contractId)
+        Contract contract = contractRepository.findWithDetailsById(contractId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng"));
         
         boolean isLandlord = contract.getRoom().getBoardingHouse().getLandlord().getId().equals(user.getId());
