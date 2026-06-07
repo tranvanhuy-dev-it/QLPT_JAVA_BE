@@ -123,6 +123,11 @@ public class ContractService {
         room.setStatus(RoomStatus.VACANT);
         roomRepository.save(room);
 
+        // Lock tenant's account
+        User tenant = contract.getTenant();
+        tenant.setStatus("INACTIVE");
+        userRepository.save(tenant);
+
         return contract;
     }
 

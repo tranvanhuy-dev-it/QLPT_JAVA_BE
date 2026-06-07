@@ -10,9 +10,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,9 +34,21 @@ public class UserController {
     @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<Page<UserResponse>> getMyTenants(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean availableOnly,
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
-        Page<User> tenants = userService.getTenantsByLandlord(landlord, pageable);
+        Page<User> tenants = userService.getTenantsByLandlord(landlord, status, availableOnly, pageable);
         return ResponseEntity.ok(tenants.map(UserResponse::fromEntity));
+    }
+
+    @PostMapping("/{id}/toggle-status")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<UserResponse> toggleTenantStatus(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User landlord = userDetails.getUser();
+        User updated = userService.toggleTenantStatusForLandlord(id, landlord);
+        return ResponseEntity.ok(UserResponse.fromEntity(updated));
     }
 }
