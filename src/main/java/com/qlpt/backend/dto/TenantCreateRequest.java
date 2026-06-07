@@ -16,4 +16,9 @@ public class TenantCreateRequest {
 
     @NotBlank(message = "Họ và tên không được trống")
     private String fullName;
+
+    private String identityCard;
+    private java.time.LocalDate idCardIssueDate;
+    private String idCardIssuePlace;
+    private String permanentAddress;
 }

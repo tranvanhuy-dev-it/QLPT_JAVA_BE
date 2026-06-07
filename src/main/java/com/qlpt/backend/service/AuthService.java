@@ -68,6 +68,9 @@ public class AuthService {
                 .fullName(request.getFullName())
                 .role(request.getRole())
                 .status(status)
+                .identityCard(request.getIdentityCard())
+                .idCardIssueDate(request.getIdCardIssueDate())
+                .idCardIssuePlace(request.getIdCardIssuePlace())
                 .build();
 
         return userRepository.save(user);
@@ -111,6 +114,10 @@ public class AuthService {
                 .role(Role.TENANT)
                 .status("ACTIVE")
                 .landlord(landlord)
+                .identityCard(request.getIdentityCard())
+                .idCardIssueDate(request.getIdCardIssueDate())
+                .idCardIssuePlace(request.getIdCardIssuePlace())
+                .permanentAddress(request.getPermanentAddress())
                 .build();
 
         return userRepository.save(tenant);

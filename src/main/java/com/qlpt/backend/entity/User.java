@@ -45,4 +45,16 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id")
     private User landlord; // For TENANTs, references their LANDLORD
+
+    @Column(name = "identity_card")
+    private String identityCard;
+
+    @Column(name = "id_card_issue_date")
+    private java.time.LocalDate idCardIssueDate;
+
+    @Column(name = "id_card_issue_place")
+    private String idCardIssuePlace;
+
+    @Column(name = "permanent_address")
+    private String permanentAddress;
 }

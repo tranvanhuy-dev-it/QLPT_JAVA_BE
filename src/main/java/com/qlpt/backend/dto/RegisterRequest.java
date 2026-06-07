@@ -17,6 +17,10 @@ public class RegisterRequest {
     private String phone;
     private String fullName;
 
+    private String identityCard;
+    private java.time.LocalDate idCardIssueDate;
+    private String idCardIssuePlace;
+
     @NotNull(message = "Vai trò không được trống")
     private Role role; // ADMIN, LANDLORD (Tenant is created by Landlord)
 }

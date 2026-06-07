@@ -12,7 +12,11 @@ public record UserResponse(
     String fullName,
     String status,
     Role role,
-    Boolean hasActiveContract
+    Boolean hasActiveContract,
+    String identityCard,
+    java.time.LocalDate idCardIssueDate,
+    String idCardIssuePlace,
+    String permanentAddress
 ) {
     public static UserResponse fromEntity(User user) {
         return fromEntity(user, null);
@@ -28,7 +32,11 @@ public record UserResponse(
             user.getFullName(),
             user.getStatus(),
             user.getRole(),
-            hasActiveContract
+            hasActiveContract,
+            user.getIdentityCard(),
+            user.getIdCardIssueDate(),
+            user.getIdCardIssuePlace(),
+            user.getPermanentAddress()
         );
     }
 }
