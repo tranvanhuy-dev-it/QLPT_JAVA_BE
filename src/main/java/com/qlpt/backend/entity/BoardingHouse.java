@@ -45,19 +45,11 @@ public class BoardingHouse {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "water_billing_type", nullable = false)
-    private WaterBillingType waterBillingType; // BY_INDEX, FIXED_PER_PERSON, FIXED_PER_ROOM
+    private WaterBillingType waterBillingType; // BY_INDEX, FIXED_PER_PERSON
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id", nullable = false)
     private User landlord;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "billing_timing")
-    private BillingTiming billingTiming;
-
-    public BillingTiming getBillingTiming() {
-        return billingTiming != null ? billingTiming : BillingTiming.PREPAID;
-    }
 
     @OneToMany(mappedBy = "boardingHouse", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

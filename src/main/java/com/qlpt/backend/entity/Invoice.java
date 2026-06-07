@@ -53,6 +53,16 @@ public class Invoice {
     @Column(name = "room_price", nullable = false)
     private double roomPrice; // Tiền phòng tính thực tế cho chu kỳ này (đã chia ngày lẻ nếu có)
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "water_billing_type", nullable = false)
+    private WaterBillingType waterBillingType; // Snapshot cách tính tiền nước lúc lập
+
+    @Column(name = "number_of_tenants", nullable = false)
+    private int numberOfTenants; // Snapshot số người lúc lập
+
+    @Column(name = "contracted_room_price", nullable = false)
+    private double contractedRoomPrice; // Snapshot đơn giá phòng gốc lúc lập
+
     @Column(name = "total_amount", nullable = false)
     private double totalAmount;
 

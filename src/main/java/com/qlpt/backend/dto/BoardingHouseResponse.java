@@ -2,6 +2,7 @@ package com.qlpt.backend.dto;
 
 import com.qlpt.backend.entity.BoardingHouse;
 import com.qlpt.backend.entity.WaterBillingType;
+import com.qlpt.backend.entity.ContractAddendum;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -15,12 +16,15 @@ public record BoardingHouseResponse(
     WaterBillingType waterBillingType,
     List<ExtraFeeResponse> extraFees,
     UserResponse landlord,
-    com.qlpt.backend.entity.BillingTiming billingTiming,
     String bankName,
     String bankAccountNumber,
     String bankAccountName
 ) {
     public static BoardingHouseResponse fromEntity(BoardingHouse bh) {
+        return fromEntity(bh, null);
+    }
+
+    public static BoardingHouseResponse fromEntity(BoardingHouse bh, ContractAddendum latest) {
         if (bh == null) return null;
         try {
             bh.getName();
@@ -37,16 +41,20 @@ public record BoardingHouseResponse(
         } catch (org.hibernate.LazyInitializationException e) {
             // keep null
         }
+
+        double elecRate = latest != null ? latest.getElectricityRate() : bh.getDefaultElectricityRate();
+        double waterRate = latest != null ? latest.getWaterRate() : bh.getDefaultWaterRate();
+        WaterBillingType waterType = latest != null ? latest.getWaterBillingType() : bh.getWaterBillingType();
+
         return new BoardingHouseResponse(
             bh.getId(),
             bh.getName(),
             bh.getAddress(),
-            bh.getDefaultElectricityRate(),
-            bh.getDefaultWaterRate(),
-            bh.getWaterBillingType(),
+            elecRate,
+            waterRate,
+            waterType,
             fees,
             UserResponse.fromEntity(bh.getLandlord()),
-            bh.getBillingTiming(),
             bh.getBankName(),
             bh.getBankAccountNumber(),
             bh.getBankAccountName()

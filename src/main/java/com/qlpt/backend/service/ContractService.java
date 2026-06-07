@@ -20,17 +20,23 @@ public class ContractService {
     private final UserRepository userRepository;
     private final ExtraFeeRepository extraFeeRepository;
     private final ContractExtraFeeRepository contractExtraFeeRepository;
+    private final ContractAddendumRepository contractAddendumRepository;
+    private final ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
 
     public ContractService(ContractRepository contractRepository,
                            RoomRepository roomRepository,
                            UserRepository userRepository,
                            ExtraFeeRepository extraFeeRepository,
-                           ContractExtraFeeRepository contractExtraFeeRepository) {
+                           ContractExtraFeeRepository contractExtraFeeRepository,
+                           ContractAddendumRepository contractAddendumRepository,
+                           ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository) {
         this.contractRepository = contractRepository;
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
         this.extraFeeRepository = extraFeeRepository;
         this.contractExtraFeeRepository = contractExtraFeeRepository;
+        this.contractAddendumRepository = contractAddendumRepository;
+        this.contractAddendumExtraFeeRepository = contractAddendumExtraFeeRepository;
     }
 
     @Transactional
@@ -55,12 +61,7 @@ public class ContractService {
             throw new RuntimeException("Tài khoản được chọn không phải là vai trò Người Thuê");
         }
 
-        // Validate billing mode config
-        if (request.getBillingMode() == BillingMode.FIXED_DATE_OF_MONTH) {
-            if (request.getFixedBillingDay() == null || request.getFixedBillingDay() < 1 || request.getFixedBillingDay() > 31) {
-                throw new RuntimeException("Chế độ ngày thanh toán cố định yêu cầu chọn ngày từ 1 đến 31");
-            }
-        }
+        double finalRoomPrice = request.getContractedRoomPrice() > 0 ? request.getContractedRoomPrice() : room.getBasePrice();
 
         // Create contract
         Contract contract = Contract.builder()
@@ -69,14 +70,26 @@ public class ContractService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .deposit(request.getDeposit())
-                .contractedRoomPrice(room.getBasePrice())
-                .billingMode(request.getBillingMode())
-                .fixedBillingDay(request.getFixedBillingDay())
+                .contractedRoomPrice(finalRoomPrice)
                 .numberOfTenants(request.getNumberOfTenants())
                 .status(ContractStatus.ACTIVE)
                 .build();
 
         Contract savedContract = contractRepository.save(contract);
+
+        // Create initial ContractAddendum
+        ContractAddendum initialAddendum = ContractAddendum.builder()
+                .contract(savedContract)
+                .startDate(request.getStartDate())
+                .roomPrice(finalRoomPrice)
+                .electricityRate(room.getBoardingHouse().getDefaultElectricityRate())
+                .waterRate(room.getBoardingHouse().getDefaultWaterRate())
+                .waterBillingType(room.getBoardingHouse().getWaterBillingType())
+                .numberOfTenants(request.getNumberOfTenants())
+                .description("Phụ lục gốc")
+                .build();
+
+        ContractAddendum savedAddendum = contractAddendumRepository.save(initialAddendum);
 
         // Update room status
         room.setStatus(RoomStatus.OCCUPIED);
@@ -88,13 +101,23 @@ public class ContractService {
                 ExtraFee extraFee = extraFeeRepository.findById(override.getExtraFeeId())
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dịch vụ phụ phí: " + override.getExtraFeeId()));
 
+                double feePrice = override.getCustomPrice() > 0 ? override.getCustomPrice() : extraFee.getDefaultPrice();
+
                 ContractExtraFee contractExtraFee = ContractExtraFee.builder()
                         .contract(savedContract)
                         .extraFee(extraFee)
-                        .customPrice(extraFee.getDefaultPrice())
+                        .customPrice(feePrice)
                         .build();
 
                 contractExtraFeeRepository.save(contractExtraFee);
+
+                ContractAddendumExtraFee addendumExtraFee = ContractAddendumExtraFee.builder()
+                        .addendum(savedAddendum)
+                        .extraFee(extraFee)
+                        .customPrice(feePrice)
+                        .build();
+
+                contractAddendumExtraFeeRepository.save(addendumExtraFee);
             }
         }
 

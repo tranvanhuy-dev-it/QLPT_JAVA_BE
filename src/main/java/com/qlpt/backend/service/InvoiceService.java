@@ -22,18 +22,21 @@ public class InvoiceService {
     private final InvoiceItemRepository invoiceItemRepository;
     private final ContractRepository contractRepository;
     private final RoomRepository roomRepository;
-    private final ContractExtraFeeRepository contractExtraFeeRepository;
+    private final ContractAddendumRepository contractAddendumRepository;
+    private final ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
 
     public InvoiceService(InvoiceRepository invoiceRepository,
                           InvoiceItemRepository invoiceItemRepository,
                           ContractRepository contractRepository,
                           RoomRepository roomRepository,
-                          ContractExtraFeeRepository contractExtraFeeRepository) {
+                          ContractAddendumRepository contractAddendumRepository,
+                          ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceItemRepository = invoiceItemRepository;
         this.contractRepository = contractRepository;
         this.roomRepository = roomRepository;
-        this.contractExtraFeeRepository = contractExtraFeeRepository;
+        this.contractAddendumRepository = contractAddendumRepository;
+        this.contractAddendumExtraFeeRepository = contractAddendumExtraFeeRepository;
     }
 
     @Transactional
@@ -62,30 +65,35 @@ public class InvoiceService {
         }
 
         // ==========================================
+        // 0. TÌM PHỤ LỤC MỚI NHẤT CÓ HIỆU LỰC
+        // ==========================================
+        ContractAddendum latestAddendum = contractAddendumRepository
+                .findFirstByContractIdAndStartDateLessThanEqualOrderByStartDateDesc(contract.getId(), end)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phụ lục hợp đồng có hiệu lực. Vui lòng kiểm tra lại hợp đồng."));
+
+        // Lấy giá trị snapshot từ phụ lục mới nhất
+        double snapshotRoomPrice = latestAddendum.getRoomPrice();
+        double snapshotElecRate = latestAddendum.getElectricityRate();
+        double snapshotWaterRate = latestAddendum.getWaterRate();
+        WaterBillingType snapshotWaterBillingType = latestAddendum.getWaterBillingType();
+        int snapshotNumberOfTenants = latestAddendum.getNumberOfTenants();
+
+        // ==========================================
         // 1. TÍNH TIỀN PHÒNG (Room Price Proration)
         // ==========================================
-        double roomPrice = 0;
-        if (request.getExcludeRoomPrice() == null || !request.getExcludeRoomPrice()) {
-            if (contract.getBillingMode() == BillingMode.BY_RENTAL_DAYS) {
-                // Tính theo tháng thuê mặc định trọn vẹn
-                roomPrice = contract.getContractedRoomPrice();
-            } else {
-                // FIXED_DATE_OF_MONTH - Ngày cố định hàng tháng
-                // Kiểm tra xem kỳ này có phải là 1 tháng trọn vẹn không
-                boolean isFullMonth = start.getDayOfMonth() == contract.getFixedBillingDay() 
-                        && end.getDayOfMonth() == contract.getFixedBillingDay() 
-                        && ChronoUnit.DAYS.between(start, end) >= 28;
+        // Kiểm tra xem kỳ này có trọn vẹn một tháng không
+        // Trọn vẹn = ngày bắt đầu là ngày cuối tháng trước (hoặc ngày 1) và ngày kết thúc là ngày cuối tháng
+        long stayedDays = ChronoUnit.DAYS.between(start, end);
+        int daysInMonth = start.lengthOfMonth();
+        boolean isFullMonth = stayedDays >= daysInMonth - 1; // cho phép sai số 1 ngày
 
-                if (isFullMonth) {
-                    roomPrice = contract.getContractedRoomPrice();
-                } else {
-                    // Ở chưa đủ tháng -> Chia tiền phòng theo ngày thực tế ở
-                    long stayedDays = ChronoUnit.DAYS.between(start, end);
-                    int daysInStartMonth = start.lengthOfMonth();
-                    double dailyRate = contract.getContractedRoomPrice() / daysInStartMonth;
-                    roomPrice = Math.round(dailyRate * stayedDays); // Làm tròn tiền phòng
-                }
-            }
+        double roomPrice;
+        if (isFullMonth) {
+            roomPrice = snapshotRoomPrice;
+        } else {
+            // Ở chưa đủ tháng -> Chia tiền phòng theo ngày thực tế ở
+            double dailyRate = snapshotRoomPrice / daysInMonth;
+            roomPrice = Math.round(dailyRate * stayedDays); // Làm tròn tiền phòng
         }
 
         // ==========================================
@@ -97,34 +105,29 @@ public class InvoiceService {
             throw new RuntimeException("Chỉ số điện mới (" + newElec + ") không được nhỏ hơn chỉ số cũ (" + oldElec + ")");
         }
         double elecUsage = newElec - oldElec;
-        double elecRate = boardingHouse.getDefaultElectricityRate();
-        double elecTotal = Math.round(elecUsage * elecRate);
+        double elecTotal = Math.round(elecUsage * snapshotElecRate);
 
         // ==========================================
         // 3. TÍNH TIỀN NƯỚC
         // ==========================================
         double oldWater = 0;
         double newWater = 0;
-        double waterRate = boardingHouse.getDefaultWaterRate();
         double waterTotal = 0;
 
-        if (boardingHouse.getWaterBillingType() == WaterBillingType.BY_INDEX) {
+        if (snapshotWaterBillingType == WaterBillingType.BY_INDEX) {
             oldWater = room.getCurrentWaterIndex();
             newWater = request.getNewWaterIndex();
             if (newWater < oldWater) {
                 throw new RuntimeException("Chỉ số nước mới (" + newWater + ") không được nhỏ hơn chỉ số cũ (" + oldWater + ")");
             }
             double waterUsage = newWater - oldWater;
-            waterTotal = Math.round(waterUsage * waterRate);
-        } else if (boardingHouse.getWaterBillingType() == WaterBillingType.FIXED_PER_PERSON) {
-            // Tính theo số lượng người ở
-            waterTotal = Math.round(contract.getNumberOfTenants() * waterRate);
-        } else if (boardingHouse.getWaterBillingType() == WaterBillingType.FIXED_PER_ROOM) {
-            // Tính cố định theo phòng
-            waterTotal = waterRate;
+            waterTotal = Math.round(waterUsage * snapshotWaterRate);
+        } else if (snapshotWaterBillingType == WaterBillingType.FIXED_PER_PERSON) {
+            // Tính theo số lượng người ở (từ phụ lục mới nhất)
+            waterTotal = Math.round(snapshotNumberOfTenants * snapshotWaterRate);
         }
 
-        // Khởi động hóa đơn
+        // Khởi tạo hóa đơn với snapshot fields
         double discount = request.getDiscount() != null ? request.getDiscount() : 0.0;
         double totalAmount = roomPrice + elecTotal + waterTotal - discount;
 
@@ -135,11 +138,14 @@ public class InvoiceService {
                 .billingPeriodEnd(end)
                 .oldElectricityIndex(oldElec)
                 .newElectricityIndex(newElec)
-                .electricityRate(elecRate)
+                .electricityRate(snapshotElecRate)
                 .oldWaterIndex(oldWater)
                 .newWaterIndex(newWater)
-                .waterRate(waterRate)
+                .waterRate(snapshotWaterRate)
                 .roomPrice(roomPrice)
+                .waterBillingType(snapshotWaterBillingType)
+                .numberOfTenants(snapshotNumberOfTenants)
+                .contractedRoomPrice(snapshotRoomPrice)
                 .discount(discount)
                 .totalAmount(totalAmount) // Sẽ được cộng thêm phụ phí ở bước tiếp theo
                 .paidAmount(0.0)
@@ -149,38 +155,36 @@ public class InvoiceService {
         Invoice savedInvoice = invoiceRepository.save(invoice);
 
         // ==========================================
-        // 4. TÍNH CÁC PHỤ PHÍ DỊCH VỤ KHÁC (Extra Fees)
+        // 4. TÍNH CÁC PHỤ PHÍ DỊCH VỤ KHÁC (Extra Fees từ Addendum)
         // ==========================================
         List<InvoiceItem> invoiceItems = new ArrayList<>();
         double extraFeesTotal = 0;
 
-        if (request.getExcludeExtraFees() == null || !request.getExcludeExtraFees()) {
-            List<ContractExtraFee> contractExtraFees = contractExtraFeeRepository.findByContractId(contract.getId());
-            for (ContractExtraFee cef : contractExtraFees) {
-                ExtraFee ef = cef.getExtraFee();
-                double quantity = 1;
-                if (ef.getUnitType() == ExtraFeeUnitType.FIXED_PER_PERSON) {
-                    quantity = contract.getNumberOfTenants();
-                }
-
-                double subtotal = Math.round(cef.getCustomPrice() * quantity);
-                extraFeesTotal += subtotal;
-
-                InvoiceItem item = InvoiceItem.builder()
-                        .invoice(savedInvoice)
-                        .name(ef.getName())
-                        .price(cef.getCustomPrice())
-                        .quantity(quantity)
-                        .subtotal(subtotal)
-                        .build();
-
-                invoiceItems.add(item);
+        List<ContractAddendumExtraFee> addendumExtraFees = contractAddendumExtraFeeRepository.findByAddendumId(latestAddendum.getId());
+        for (ContractAddendumExtraFee cef : addendumExtraFees) {
+            ExtraFee ef = cef.getExtraFee();
+            double quantity = 1;
+            if (ef.getUnitType() == ExtraFeeUnitType.FIXED_PER_PERSON) {
+                quantity = snapshotNumberOfTenants;
             }
 
-            // Lưu chi tiết các phụ phí dịch vụ
-            if (!invoiceItems.isEmpty()) {
-                invoiceItemRepository.saveAll(invoiceItems);
-            }
+            double subtotal = Math.round(cef.getCustomPrice() * quantity);
+            extraFeesTotal += subtotal;
+
+            InvoiceItem item = InvoiceItem.builder()
+                    .invoice(savedInvoice)
+                    .name(ef.getName())
+                    .price(cef.getCustomPrice())
+                    .quantity(quantity)
+                    .subtotal(subtotal)
+                    .build();
+
+            invoiceItems.add(item);
+        }
+
+        // Lưu chi tiết các phụ phí dịch vụ
+        if (!invoiceItems.isEmpty()) {
+            invoiceItemRepository.saveAll(invoiceItems);
         }
 
         // Cập nhật lại tổng tiền bao gồm phụ phí dịch vụ
@@ -191,7 +195,7 @@ public class InvoiceService {
         // 5. CẬP NHẬT CHỈ SỐ ĐỒNG HỒ ĐIỆN NƯỚC CỦA PHÒNG
         // ==========================================
         room.setCurrentElectricityIndex(newElec);
-        if (boardingHouse.getWaterBillingType() == WaterBillingType.BY_INDEX) {
+        if (snapshotWaterBillingType == WaterBillingType.BY_INDEX) {
             room.setCurrentWaterIndex(newWater);
         }
         roomRepository.save(room);

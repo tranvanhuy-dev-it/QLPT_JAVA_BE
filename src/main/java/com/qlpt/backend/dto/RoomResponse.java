@@ -2,6 +2,7 @@ package com.qlpt.backend.dto;
 
 import com.qlpt.backend.entity.Room;
 import com.qlpt.backend.entity.RoomStatus;
+import com.qlpt.backend.entity.ContractAddendum;
 import java.util.UUID;
 
 public record RoomResponse(
@@ -15,6 +16,10 @@ public record RoomResponse(
     BoardingHouseResponse boardingHouse
 ) {
     public static RoomResponse fromEntity(Room room) {
+        return fromEntity(room, null);
+    }
+
+    public static RoomResponse fromEntity(Room room, ContractAddendum latest) {
         if (room == null) return null;
         try {
             room.getRoomNumber();
@@ -29,7 +34,7 @@ public record RoomResponse(
             room.getCurrentWaterIndex(),
             room.getMaxPeople(),
             room.getStatus(),
-            BoardingHouseResponse.fromEntity(room.getBoardingHouse())
+            BoardingHouseResponse.fromEntity(room.getBoardingHouse(), latest)
         );
     }
 }

@@ -1,8 +1,8 @@
 package com.qlpt.backend.dto;
 
-import com.qlpt.backend.entity.BillingMode;
 import com.qlpt.backend.entity.Contract;
 import com.qlpt.backend.entity.ContractStatus;
+import com.qlpt.backend.entity.ContractAddendum;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -12,8 +12,6 @@ public record ContractResponse(
     LocalDate endDate,
     double deposit,
     double contractedRoomPrice,
-    BillingMode billingMode,
-    Integer fixedBillingDay,
     ContractStatus status,
     RoomResponse room,
     UserResponse tenant,
@@ -26,18 +24,22 @@ public record ContractResponse(
         } catch (org.hibernate.LazyInitializationException e) {
             return null;
         }
+
+        ContractAddendum latest = contract.getLatestAddendum();
+        double roomPrice = latest != null ? latest.getRoomPrice() : contract.getContractedRoomPrice();
+        int tenants = latest != null ? latest.getNumberOfTenants() : contract.getNumberOfTenants();
+        RoomResponse roomResponse = RoomResponse.fromEntity(contract.getRoom(), latest);
+
         return new ContractResponse(
             contract.getId(),
             contract.getStartDate(),
             contract.getEndDate(),
             contract.getDeposit(),
-            contract.getContractedRoomPrice(),
-            contract.getBillingMode(),
-            contract.getFixedBillingDay(),
+            roomPrice,
             contract.getStatus(),
-            RoomResponse.fromEntity(contract.getRoom()),
+            roomResponse,
             UserResponse.fromEntity(contract.getTenant()),
-            contract.getNumberOfTenants()
+            tenants
         );
     }
 }

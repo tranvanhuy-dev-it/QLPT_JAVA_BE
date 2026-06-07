@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,13 +38,6 @@ public class Contract {
     private double contractedRoomPrice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "billing_mode", nullable = false)
-    private BillingMode billingMode; // BY_RENTAL_DAYS, FIXED_DATE_OF_MONTH
-
-    @Column(name = "fixed_billing_day")
-    private Integer fixedBillingDay; // e.g. 5 (5th of every month)
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ContractStatus status; // ACTIVE, EXPIRED, TERMINATED
 
@@ -56,4 +51,19 @@ public class Contract {
 
     @Column(name = "number_of_tenants", nullable = false)
     private int numberOfTenants;
+
+    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<ContractAddendum> addendums = new ArrayList<>();
+
+    public ContractAddendum getLatestAddendum() {
+        if (addendums == null || addendums.isEmpty()) {
+            return null;
+        }
+        return addendums.stream()
+            .max(java.util.Comparator.comparing(ContractAddendum::getStartDate))
+            .orElse(null);
+    }
 }
