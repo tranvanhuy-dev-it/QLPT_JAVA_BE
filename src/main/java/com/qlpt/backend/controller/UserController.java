@@ -38,8 +38,8 @@ public class UserController {
             @RequestParam(required = false) Boolean availableOnly,
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
-        Page<User> tenants = userService.getTenantsByLandlord(landlord, status, availableOnly, pageable);
-        return ResponseEntity.ok(tenants.map(UserResponse::fromEntity));
+        Page<UserResponse> tenants = userService.getTenantsByLandlord(landlord, status, availableOnly, pageable);
+        return ResponseEntity.ok(tenants);
     }
 
     @PostMapping("/{id}/toggle-status")

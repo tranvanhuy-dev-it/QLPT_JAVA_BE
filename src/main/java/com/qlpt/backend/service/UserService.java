@@ -1,8 +1,10 @@
 package com.qlpt.backend.service;
 
+import com.qlpt.backend.dto.UserResponse;
 import com.qlpt.backend.entity.Role;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.exception.ResourceNotFoundException;
+import com.qlpt.backend.repository.ContractRepository;
 import com.qlpt.backend.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,9 +19,11 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ContractRepository contractRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, ContractRepository contractRepository) {
         this.userRepository = userRepository;
+        this.contractRepository = contractRepository;
     }
 
     public User getProfile(UUID userId) {
@@ -28,20 +32,22 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<User> getTenantsByLandlord(User landlord, Pageable pageable) {
+    public Page<UserResponse> getTenantsByLandlord(User landlord, Pageable pageable) {
         return getTenantsByLandlord(landlord, null, null, pageable);
     }
 
     @Transactional(readOnly = true)
-    public Page<User> getTenantsByLandlord(User landlord, String status, Boolean availableOnly, Pageable pageable) {
+    public Page<UserResponse> getTenantsByLandlord(User landlord, String status, Boolean availableOnly, Pageable pageable) {
         Page<User> tenants = userRepository.findTenants(Role.TENANT, landlord.getId(), status, availableOnly, pageable);
-        // Force initialization of contracts collection for each tenant while session is active
-        tenants.forEach(u -> {
-            if (u.getContracts() != null) {
-                u.getContracts().size(); // triggers batch load
-            }
-        });
-        return tenants;
+        if (tenants.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<UUID> tenantIds = tenants.stream().map(User::getId).collect(Collectors.toList());
+        List<UUID> activeTenantIds = contractRepository.findTenantIdsWithActiveContracts(tenantIds);
+        java.util.Set<UUID> activeTenantSet = new java.util.HashSet<>(activeTenantIds);
+
+        return tenants.map(u -> UserResponse.fromEntity(u, activeTenantSet.contains(u.getId())));
     }
 
     @Transactional
