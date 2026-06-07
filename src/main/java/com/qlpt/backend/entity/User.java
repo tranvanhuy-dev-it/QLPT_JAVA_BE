@@ -45,4 +45,10 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id")
     private User landlord; // For TENANTs, references their LANDLORD
+
+    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private java.util.List<Contract> contracts = new java.util.ArrayList<>();
 }

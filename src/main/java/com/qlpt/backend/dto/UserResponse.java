@@ -11,10 +11,16 @@ public record UserResponse(
     String phone,
     String fullName,
     String status,
-    Role role
+    Role role,
+    Boolean hasActiveContract
 ) {
     public static UserResponse fromEntity(User user) {
         if (user == null || !org.hibernate.Hibernate.isInitialized(user)) return null;
+        Boolean hasActive = null;
+        if (user.getContracts() != null && org.hibernate.Hibernate.isInitialized(user.getContracts())) {
+            hasActive = user.getContracts().stream()
+                .anyMatch(c -> c.getStatus() == com.qlpt.backend.entity.ContractStatus.ACTIVE);
+        }
         return new UserResponse(
             user.getId(),
             user.getUsername(),
@@ -22,7 +28,8 @@ public record UserResponse(
             user.getPhone(),
             user.getFullName(),
             user.getStatus(),
-            user.getRole()
+            user.getRole(),
+            hasActive
         );
     }
 }

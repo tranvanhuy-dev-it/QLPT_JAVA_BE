@@ -27,12 +27,21 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
     }
 
+    @Transactional(readOnly = true)
     public Page<User> getTenantsByLandlord(User landlord, Pageable pageable) {
         return getTenantsByLandlord(landlord, null, null, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<User> getTenantsByLandlord(User landlord, String status, Boolean availableOnly, Pageable pageable) {
-        return userRepository.findTenants(Role.TENANT, landlord.getId(), status, availableOnly, pageable);
+        Page<User> tenants = userRepository.findTenants(Role.TENANT, landlord.getId(), status, availableOnly, pageable);
+        // Force initialization of contracts collection for each tenant while session is active
+        tenants.forEach(u -> {
+            if (u.getContracts() != null) {
+                u.getContracts().size(); // triggers batch load
+            }
+        });
+        return tenants;
     }
 
     @Transactional
