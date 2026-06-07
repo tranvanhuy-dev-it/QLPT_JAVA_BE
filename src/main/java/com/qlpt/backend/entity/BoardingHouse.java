@@ -28,6 +28,15 @@ public class BoardingHouse {
 
     private String address;
 
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "bank_account_number")
+    private String bankAccountNumber;
+
+    @Column(name = "bank_account_name")
+    private String bankAccountName;
+
     @Column(name = "default_electricity_rate", nullable = false)
     private double defaultElectricityRate; // e.g. 3500 VND/kWh
 

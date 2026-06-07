@@ -77,6 +77,9 @@ public class RoomService {
         boardingHouse.setDefaultWaterRate(bhDetails.getDefaultWaterRate());
         boardingHouse.setWaterBillingType(bhDetails.getWaterBillingType());
         boardingHouse.setBillingTiming(bhDetails.getBillingTiming());
+        boardingHouse.setBankName(bhDetails.getBankName());
+        boardingHouse.setBankAccountNumber(bhDetails.getBankAccountNumber());
+        boardingHouse.setBankAccountName(bhDetails.getBankAccountName());
         
         // Cập nhật phụ phí dịch vụ qua JPA Cascade
         boardingHouse.getExtraFees().clear();
