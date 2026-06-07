@@ -200,7 +200,7 @@ public class InvoiceService {
         }
         roomRepository.save(room);
 
-        return finalInvoice;
+        return invoiceRepository.findWithDetailsById(finalInvoice.getId()).orElse(finalInvoice);
     }
 
     @Transactional
@@ -225,7 +225,8 @@ public class InvoiceService {
             invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
         }
 
-        return invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
+        return invoiceRepository.findWithDetailsById(saved.getId()).orElse(saved);
     }
 
     @Transactional(readOnly = true)
