@@ -59,6 +59,9 @@ public class Invoice {
     @Column(name = "paid_amount", nullable = false)
     private double paidAmount;
 
+    @Column(name = "discount", nullable = false)
+    private double discount;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private InvoiceStatus status; // PENDING, PAID, PARTIALLY_PAID

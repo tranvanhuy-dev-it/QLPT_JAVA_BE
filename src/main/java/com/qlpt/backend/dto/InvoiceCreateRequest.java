@@ -28,4 +28,6 @@ public class InvoiceCreateRequest {
     private Boolean excludeRoomPrice; // Chỉ thu điện nước, không thu tiền phòng (phục vụ thu kỳ cuối)
 
     private Boolean excludeExtraFees; // Không thu các phụ phí dịch vụ tháng tiếp theo
+
+    private Double discount; // Số tiền giảm giá cho khách thuê
 }

@@ -125,7 +125,8 @@ public class InvoiceService {
         }
 
         // Khởi động hóa đơn
-        double totalAmount = roomPrice + elecTotal + waterTotal;
+        double discount = request.getDiscount() != null ? request.getDiscount() : 0.0;
+        double totalAmount = roomPrice + elecTotal + waterTotal - discount;
 
         Invoice invoice = Invoice.builder()
                 .contract(contract)
@@ -139,6 +140,7 @@ public class InvoiceService {
                 .newWaterIndex(newWater)
                 .waterRate(waterRate)
                 .roomPrice(roomPrice)
+                .discount(discount)
                 .totalAmount(totalAmount) // Sẽ được cộng thêm phụ phí ở bước tiếp theo
                 .paidAmount(0.0)
                 .status(InvoiceStatus.PENDING)

@@ -21,7 +21,8 @@ public record InvoiceResponse(
     double paidAmount,
     InvoiceStatus status,
     LocalDate paymentDate,
-    ContractResponse contract
+    ContractResponse contract,
+    double discount
 ) {
     public static InvoiceResponse fromEntity(Invoice invoice) {
         if (invoice == null) return null;
@@ -46,7 +47,8 @@ public record InvoiceResponse(
             invoice.getPaidAmount(),
             invoice.getStatus(),
             invoice.getPaymentDate(),
-            ContractResponse.fromEntity(invoice.getContract())
+            ContractResponse.fromEntity(invoice.getContract()),
+            invoice.getDiscount()
         );
     }
 }
