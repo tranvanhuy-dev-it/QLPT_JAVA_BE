@@ -121,7 +121,7 @@ public class ContractService {
             }
         }
 
-        return savedContract;
+        return contractRepository.findWithDetailsById(savedContract.getId()).orElse(savedContract);
     }
 
     @Transactional
@@ -151,7 +151,7 @@ public class ContractService {
         tenant.setStatus("INACTIVE");
         userRepository.save(tenant);
 
-        return contract;
+        return contractRepository.findWithDetailsById(contract.getId()).orElse(contract);
     }
 
     @Transactional
@@ -175,8 +175,8 @@ public class ContractService {
             throw new RuntimeException("Số người ở vượt quá sức chứa tối đa của phòng (" + contract.getRoom().getMaxPeople() + " người)");
         }
 
-        contract.setNumberOfTenants(numberOfTenants);
-        return contractRepository.save(contract);
+        Contract saved = contractRepository.save(contract);
+        return contractRepository.findWithDetailsById(saved.getId()).orElse(saved);
     }
 
     @Transactional(readOnly = true)
