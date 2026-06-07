@@ -15,7 +15,12 @@ public record RoomResponse(
     BoardingHouseResponse boardingHouse
 ) {
     public static RoomResponse fromEntity(Room room) {
-        if (room == null || !org.hibernate.Hibernate.isInitialized(room)) return null;
+        if (room == null) return null;
+        try {
+            room.getRoomNumber();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
         return new RoomResponse(
             room.getId(),
             room.getRoomNumber(),

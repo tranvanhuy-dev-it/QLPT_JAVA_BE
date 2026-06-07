@@ -20,7 +20,12 @@ public record ContractResponse(
     int numberOfTenants
 ) {
     public static ContractResponse fromEntity(Contract contract) {
-        if (contract == null || !org.hibernate.Hibernate.isInitialized(contract)) return null;
+        if (contract == null) return null;
+        try {
+            contract.getStartDate();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
         return new ContractResponse(
             contract.getId(),
             contract.getStartDate(),

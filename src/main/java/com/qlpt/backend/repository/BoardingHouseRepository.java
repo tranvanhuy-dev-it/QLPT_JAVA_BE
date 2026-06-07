@@ -15,6 +15,6 @@ public interface BoardingHouseRepository extends JpaRepository<BoardingHouse, UU
     @EntityGraph(attributePaths = {"landlord", "extraFees"})
     Optional<BoardingHouse> findWithDetailsById(UUID id);
 
-    @EntityGraph(attributePaths = {"landlord"})
+    @EntityGraph(attributePaths = {"landlord", "extraFees"})
     Page<BoardingHouse> findByLandlordId(UUID landlordId, Pageable pageable);
 }

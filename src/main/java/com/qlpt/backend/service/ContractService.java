@@ -166,9 +166,24 @@ public class ContractService {
         Contract contract = contractRepository.findWithDetailsById(contractId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng"));
 
+        System.out.println("=== DEBUGLOG: getContractById ===");
+        System.out.println("Logged in user ID: " + user.getId() + " (" + user.getUsername() + ", Role: " + user.getRole() + ")");
+        if (contract.getRoom() != null && contract.getRoom().getBoardingHouse() != null && contract.getRoom().getBoardingHouse().getLandlord() != null) {
+            System.out.println("Contract Landlord ID: " + contract.getRoom().getBoardingHouse().getLandlord().getId() + " (" + contract.getRoom().getBoardingHouse().getLandlord().getUsername() + ")");
+        } else {
+            System.out.println("Contract room/boarding house/landlord is NULL!");
+        }
+        if (contract.getTenant() != null) {
+            System.out.println("Contract Tenant ID: " + contract.getTenant().getId() + " (" + contract.getTenant().getUsername() + ")");
+        } else {
+            System.out.println("Contract Tenant is NULL!");
+        }
+
         // Allow landlord or tenant of this contract to view it
         boolean isLandlord = contract.getRoom().getBoardingHouse().getLandlord().getId().equals(user.getId());
         boolean isTenant = contract.getTenant().getId().equals(user.getId());
+
+        System.out.println("isLandlord: " + isLandlord + ", isTenant: " + isTenant);
 
         if (!isLandlord && !isTenant && user.getRole() != Role.ADMIN) {
             throw new RuntimeException("Bạn không có quyền xem thông tin hợp đồng này");

@@ -9,6 +9,7 @@ import com.qlpt.backend.exception.ResourceNotFoundException;
 import com.qlpt.backend.repository.BoardingHouseRepository;
 import com.qlpt.backend.repository.ExtraFeeRepository;
 import com.qlpt.backend.repository.RoomRepository;
+import com.qlpt.backend.repository.ContractExtraFeeRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,13 +24,16 @@ public class RoomService {
     private final BoardingHouseRepository boardingHouseRepository;
     private final RoomRepository roomRepository;
     private final ExtraFeeRepository extraFeeRepository;
+    private final ContractExtraFeeRepository contractExtraFeeRepository;
 
     public RoomService(BoardingHouseRepository boardingHouseRepository,
                        RoomRepository roomRepository,
-                       ExtraFeeRepository extraFeeRepository) {
+                       ExtraFeeRepository extraFeeRepository,
+                       ContractExtraFeeRepository contractExtraFeeRepository) {
         this.boardingHouseRepository = boardingHouseRepository;
         this.roomRepository = roomRepository;
         this.extraFeeRepository = extraFeeRepository;
+        this.contractExtraFeeRepository = contractExtraFeeRepository;
     }
 
     // ==========================================
@@ -173,6 +177,8 @@ public class RoomService {
         if (!extraFee.getBoardingHouse().getLandlord().getId().equals(landlord.getId())) {
             throw new RuntimeException("Bạn không có quyền xóa phụ phí này");
         }
+        // Delete all associated contract extra fees to prevent FK violations
+        contractExtraFeeRepository.deleteByExtraFeeId(extraFeeId);
         extraFeeRepository.delete(extraFee);
     }
 }

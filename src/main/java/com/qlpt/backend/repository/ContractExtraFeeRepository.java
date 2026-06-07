@@ -13,4 +13,5 @@ public interface ContractExtraFeeRepository extends JpaRepository<ContractExtraF
     @EntityGraph(attributePaths = {"extraFee"})
     List<ContractExtraFee> findByContractId(UUID contractId);
     void deleteByContractId(UUID contractId);
+    void deleteByExtraFeeId(UUID extraFeeId);
 }

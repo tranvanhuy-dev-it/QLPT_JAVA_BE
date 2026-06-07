@@ -24,7 +24,12 @@ public record InvoiceResponse(
     ContractResponse contract
 ) {
     public static InvoiceResponse fromEntity(Invoice invoice) {
-        if (invoice == null || !org.hibernate.Hibernate.isInitialized(invoice)) return null;
+        if (invoice == null) return null;
+        try {
+            invoice.getInvoiceDate();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
         return new InvoiceResponse(
             invoice.getId(),
             invoice.getInvoiceDate(),

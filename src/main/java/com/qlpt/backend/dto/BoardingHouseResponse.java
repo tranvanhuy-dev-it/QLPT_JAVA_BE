@@ -18,12 +18,21 @@ public record BoardingHouseResponse(
     com.qlpt.backend.entity.BillingTiming billingTiming
 ) {
     public static BoardingHouseResponse fromEntity(BoardingHouse bh) {
-        if (bh == null || !org.hibernate.Hibernate.isInitialized(bh)) return null;
+        if (bh == null) return null;
+        try {
+            bh.getName();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
         List<ExtraFeeResponse> fees = null;
-        if (bh.getExtraFees() != null && org.hibernate.Hibernate.isInitialized(bh.getExtraFees())) {
-            fees = bh.getExtraFees().stream()
-                .map(ExtraFeeResponse::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            if (bh.getExtraFees() != null) {
+                fees = bh.getExtraFees().stream()
+                    .map(ExtraFeeResponse::fromEntity)
+                    .collect(Collectors.toList());
+            }
+        } catch (org.hibernate.LazyInitializationException e) {
+            // keep null
         }
         return new BoardingHouseResponse(
             bh.getId(),

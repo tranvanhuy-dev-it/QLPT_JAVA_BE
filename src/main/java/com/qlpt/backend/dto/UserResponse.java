@@ -23,7 +23,12 @@ public record UserResponse(
     }
 
     public static UserResponse fromEntity(User user, Boolean hasActiveContract) {
-        if (user == null || !org.hibernate.Hibernate.isInitialized(user)) return null;
+        if (user == null) return null;
+        try {
+            user.getUsername();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
         return new UserResponse(
             user.getId(),
             user.getUsername(),
