@@ -24,7 +24,7 @@ public record InvoiceResponse(
     ContractResponse contract
 ) {
     public static InvoiceResponse fromEntity(Invoice invoice) {
-        if (invoice == null) return null;
+        if (invoice == null || !org.hibernate.Hibernate.isInitialized(invoice)) return null;
         return new InvoiceResponse(
             invoice.getId(),
             invoice.getInvoiceDate(),

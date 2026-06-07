@@ -11,7 +11,7 @@ public record InvoiceItemResponse(
     double subtotal
 ) {
     public static InvoiceItemResponse fromEntity(InvoiceItem item) {
-        if (item == null) return null;
+        if (item == null || !org.hibernate.Hibernate.isInitialized(item)) return null;
         return new InvoiceItemResponse(
             item.getId(),
             item.getName(),

@@ -9,7 +9,7 @@ public record ContractExtraFeeResponse(
     double customPrice
 ) {
     public static ContractExtraFeeResponse fromEntity(ContractExtraFee cef) {
-        if (cef == null) return null;
+        if (cef == null || !org.hibernate.Hibernate.isInitialized(cef)) return null;
         return new ContractExtraFeeResponse(
             cef.getId(),
             ExtraFeeResponse.fromEntity(cef.getExtraFee()),

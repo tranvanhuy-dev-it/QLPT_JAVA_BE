@@ -11,7 +11,7 @@ public record ExtraFeeResponse(
     ExtraFeeUnitType unitType
 ) {
     public static ExtraFeeResponse fromEntity(ExtraFee fee) {
-        if (fee == null) return null;
+        if (fee == null || !org.hibernate.Hibernate.isInitialized(fee)) return null;
         return new ExtraFeeResponse(
             fee.getId(),
             fee.getName(),
