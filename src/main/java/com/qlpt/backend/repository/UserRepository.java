@@ -18,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
     Page<User> findByRole(Role role, Pageable pageable);
     Page<User> findByRoleAndLandlordId(Role role, UUID landlordId, Pageable pageable);
+    long countByRole(Role role);
 
     @Query("SELECT u FROM User u WHERE u.role = :role AND u.landlord.id = :landlordId " +
            "AND (:status IS NULL OR u.status = :status) " +
