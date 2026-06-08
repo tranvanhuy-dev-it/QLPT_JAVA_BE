@@ -54,7 +54,8 @@ public class SecurityConfig {
                 "https://tvhquanlyphongtro.vercel.app",
                 "https://phongtro.tranvanhuy.io.vn",
                 "http://localhost",
-                "capacitor://localhost")); // Choo phép Vue local, production, và Capacitor Android/iOS
+                "https://localhost",
+                "capacitor://localhost")); // Cho phép Vue local, production, và Capacitor Android/iOS
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
