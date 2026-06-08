@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.qlpt.backend.entity.SystemSetting;
+import com.qlpt.backend.service.SystemSettingService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,9 +26,23 @@ import java.util.stream.Collectors;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final SystemSettingService systemSettingService;
 
-    public SubscriptionController(SubscriptionService subscriptionService) {
+    public SubscriptionController(SubscriptionService subscriptionService,
+                                  SystemSettingService systemSettingService) {
         this.subscriptionService = subscriptionService;
+        this.systemSettingService = systemSettingService;
+    }
+
+    @GetMapping("/admin-bank-info")
+    public ResponseEntity<SystemSetting> getAdminBankInfo() {
+        return ResponseEntity.ok(systemSettingService.getSetting());
+    }
+
+    @PutMapping("/admin-bank-info")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SystemSetting> updateAdminBankInfo(@RequestBody SystemSetting setting) {
+        return ResponseEntity.ok(systemSettingService.updateSetting(setting));
     }
 
     @PostMapping("/request")
