@@ -79,6 +79,7 @@ public class RoomService {
         boardingHouse.setBankName(bhDetails.getBankName());
         boardingHouse.setBankAccountNumber(bhDetails.getBankAccountNumber());
         boardingHouse.setBankAccountName(bhDetails.getBankAccountName());
+        boardingHouse.setRules(bhDetails.getRules());
         
         // Cập nhật phụ phí dịch vụ qua JPA Cascade
         boardingHouse.getExtraFees().clear();

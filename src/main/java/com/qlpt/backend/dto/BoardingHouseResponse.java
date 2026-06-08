@@ -18,7 +18,8 @@ public record BoardingHouseResponse(
     UserResponse landlord,
     String bankName,
     String bankAccountNumber,
-    String bankAccountName
+    String bankAccountName,
+    String rules
 ) {
     public static BoardingHouseResponse fromEntity(BoardingHouse bh) {
         return fromEntity(bh, null);
@@ -57,7 +58,8 @@ public record BoardingHouseResponse(
             UserResponse.fromEntity(bh.getLandlord()),
             bh.getBankName(),
             bh.getBankAccountNumber(),
-            bh.getBankAccountName()
+            bh.getBankAccountName(),
+            bh.getRules()
         );
     }
 }

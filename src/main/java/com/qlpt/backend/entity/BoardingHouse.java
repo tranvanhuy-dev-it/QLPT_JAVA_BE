@@ -47,6 +47,9 @@ public class BoardingHouse {
     @Column(name = "water_billing_type", nullable = false)
     private WaterBillingType waterBillingType; // BY_INDEX, FIXED_PER_PERSON
 
+    @Column(name = "rules", columnDefinition = "TEXT")
+    private String rules;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id", nullable = false)
     private User landlord;
