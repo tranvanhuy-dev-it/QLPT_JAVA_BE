@@ -11,4 +11,5 @@ public class JwtResponse {
     private UUID id;
     private String username;
     private String role;
+    private Boolean isExpired;
 }

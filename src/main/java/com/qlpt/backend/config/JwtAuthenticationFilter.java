@@ -12,6 +12,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.qlpt.backend.entity.User;
 
 import java.io.IOException;
 
@@ -39,6 +40,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                if (userDetails instanceof CustomUserDetails) {
+                    User user = ((CustomUserDetails) userDetails).getUser();
+                    String requestURI = request.getRequestURI();
+                    
+                    boolean isExcluded = requestURI.startsWith("/api/auth/") 
+                                      || requestURI.startsWith("/api/subscriptions/")
+                                      || user.getRole() == com.qlpt.backend.entity.Role.ADMIN;
+                                      
+                    if (!isExcluded) {
+                        User checkUser = user.getRole() == com.qlpt.backend.entity.Role.TENANT ? user.getLandlord() : user;
+                        if (checkUser != null) {
+                            java.time.LocalDate now = java.time.LocalDate.now();
+                            java.time.LocalDateTime regDate = checkUser.getCreatedAt() != null ? checkUser.getCreatedAt() : java.time.LocalDateTime.now().minusDays(50);
+                            
+                            boolean trialActive = regDate.plusDays(45).isAfter(java.time.LocalDateTime.now());
+                            boolean subscriptionActive = checkUser.getSubscriptionExpiredAt() != null && !checkUser.getSubscriptionExpiredAt().isBefore(now);
+                            
+                            if (!trialActive && !subscriptionActive) {
+                                response.setStatus(402); // 402 Payment Required
+                                response.setContentType("application/json");
+                                response.setCharacterEncoding("UTF-8");
+                                response.getWriter().write("{\"error\":\"SUBSCRIPTION_EXPIRED\",\"message\":\"Gói dịch vụ đã hết hạn. Vui lòng thanh toán gia hạn để tiếp tục!\"}");
+                                return;
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception ex) {
             logger.error("Không thể thiết lập xác thực người dùng trong bộ lọc bảo mật", ex);

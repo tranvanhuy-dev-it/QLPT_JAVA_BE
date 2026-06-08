@@ -16,7 +16,9 @@ public record UserResponse(
     String identityCard,
     java.time.LocalDate idCardIssueDate,
     String idCardIssuePlace,
-    String permanentAddress
+    String permanentAddress,
+    java.time.LocalDateTime createdAt,
+    java.time.LocalDate subscriptionExpiredAt
 ) {
     public static UserResponse fromEntity(User user) {
         return fromEntity(user, null);
@@ -41,7 +43,9 @@ public record UserResponse(
             user.getIdentityCard(),
             user.getIdCardIssueDate(),
             user.getIdCardIssuePlace(),
-            user.getPermanentAddress()
+            user.getPermanentAddress(),
+            user.getCreatedAt(),
+            user.getSubscriptionExpiredAt()
         );
     }
 }

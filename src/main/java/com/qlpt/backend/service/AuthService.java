@@ -57,9 +57,6 @@ public class AuthService {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
 
-        // Landlords must be approved by admin before logging in, so status is PENDING.
-        String status = (request.getRole() == Role.LANDLORD) ? "PENDING" : "ACTIVE";
-
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -67,10 +64,11 @@ public class AuthService {
                 .phone(request.getPhone())
                 .fullName(request.getFullName())
                 .role(request.getRole())
-                .status(status)
+                .status("ACTIVE")
                 .identityCard(request.getIdentityCard())
                 .idCardIssueDate(request.getIdCardIssueDate())
                 .idCardIssuePlace(request.getIdCardIssuePlace())
+                .createdAt(java.time.LocalDateTime.now())
                 .build();
 
         return userRepository.save(user);
@@ -88,7 +86,17 @@ public class AuthService {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
 
-            return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getRole().name());
+            boolean isExpired = false;
+            if (user.getRole() == Role.LANDLORD) {
+                java.time.LocalDate now = java.time.LocalDate.now();
+                java.time.LocalDateTime regDate = user.getCreatedAt() != null ? user.getCreatedAt() : java.time.LocalDateTime.now().minusDays(50);
+                
+                boolean trialActive = regDate.plusDays(45).isAfter(java.time.LocalDateTime.now());
+                boolean subscriptionActive = user.getSubscriptionExpiredAt() != null && !user.getSubscriptionExpiredAt().isBefore(now);
+                isExpired = !trialActive && !subscriptionActive;
+            }
+
+            return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getRole().name(), isExpired);
         } catch (org.springframework.security.authentication.DisabledException
                  | org.springframework.security.authentication.LockedException ex) {
             throw new RuntimeException("Tài khoản của bạn chưa được kích hoạt hoặc đã bị khóa. Vui lòng liên hệ Admin!");
@@ -118,6 +126,7 @@ public class AuthService {
                 .idCardIssueDate(request.getIdCardIssueDate())
                 .idCardIssuePlace(request.getIdCardIssuePlace())
                 .permanentAddress(request.getPermanentAddress())
+                .createdAt(java.time.LocalDateTime.now())
                 .build();
 
         return userRepository.save(tenant);

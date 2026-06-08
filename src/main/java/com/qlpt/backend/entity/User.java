@@ -57,4 +57,10 @@ public class User {
 
     @Column(name = "permanent_address")
     private String permanentAddress;
+
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+
+    @Column(name = "subscription_expired_at")
+    private java.time.LocalDate subscriptionExpiredAt;
 }
