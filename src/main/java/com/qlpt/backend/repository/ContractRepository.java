@@ -26,6 +26,9 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
     @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord", "addendums"})
     Page<Contract> findByRoomBoardingHouseLandlordId(UUID landlordId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord", "addendums"})
+    Page<Contract> findByRoomId(UUID roomId, Pageable pageable);
+
     @Query("SELECT c.tenant.id FROM Contract c WHERE c.status = com.qlpt.backend.entity.ContractStatus.ACTIVE AND c.tenant.id IN :tenantIds")
     java.util.List<UUID> findTenantIdsWithActiveContracts(@Param("tenantIds") java.util.List<UUID> tenantIds);
 }

@@ -185,6 +185,16 @@ public class ContractService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Contract> getContractsByRoomAndLandlord(UUID roomId, User landlord, Pageable pageable) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phòng trọ"));
+        if (!room.getBoardingHouse().getLandlord().getId().equals(landlord.getId())) {
+            throw new RuntimeException("Bạn không có quyền quản lý phòng trọ này");
+        }
+        return contractRepository.findByRoomId(roomId, pageable);
+    }
+
+    @Transactional(readOnly = true)
     public Contract getContractById(UUID contractId, User user) {
         Contract contract = contractRepository.findWithDetailsById(contractId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng"));
