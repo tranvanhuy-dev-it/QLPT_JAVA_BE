@@ -50,8 +50,10 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",
             "https://tvhquanlyphongtro.vercel.app",
-             "https://phongtro.tranvanhuy.io.vn"
-        )); // Cho phép Vue local và Vue production trên Vercel
+            "https://phongtro.tranvanhuy.io.vn",
+            "http://localhost",
+            "capacitor://localhost"
+        )); // Cho phép Vue local, production, và Capacitor Android/iOS
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
