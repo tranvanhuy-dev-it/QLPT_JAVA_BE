@@ -42,6 +42,16 @@ public class UserController {
         return ResponseEntity.ok(tenants);
     }
 
+    @GetMapping("/tenants/{id}")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<UserResponse> getTenantDetail(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User landlord = userDetails.getUser();
+        UserResponse tenant = userService.getTenantDetailForLandlord(id, landlord);
+        return ResponseEntity.ok(tenant);
+    }
+
     @PostMapping("/{id}/toggle-status")
     @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<UserResponse> toggleTenantStatus(

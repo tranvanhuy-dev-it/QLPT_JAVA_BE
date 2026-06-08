@@ -52,6 +52,23 @@ public class UserService {
         return tenants.map(u -> UserResponse.fromEntity(u, activeTenantSet.contains(u.getId())));
     }
 
+    @Transactional(readOnly = true)
+    public UserResponse getTenantDetailForLandlord(UUID tenantId, User landlord) {
+        User tenant = userRepository.findById(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản người thuê"));
+
+        if (tenant.getRole() != Role.TENANT) {
+            throw new RuntimeException("Tài khoản này không phải là người thuê");
+        }
+
+        if (tenant.getLandlord() == null || !tenant.getLandlord().getId().equals(landlord.getId())) {
+            throw new RuntimeException("Bạn không có quyền xem thông tin tài khoản người thuê này");
+        }
+
+        boolean hasActiveContract = contractRepository.findTenantIdsWithActiveContracts(List.of(tenantId)).size() > 0;
+        return UserResponse.fromEntity(tenant, hasActiveContract);
+    }
+
     @Transactional
     public User toggleTenantStatusForLandlord(UUID tenantId, User landlord) {
         User tenant = userRepository.findById(tenantId)
