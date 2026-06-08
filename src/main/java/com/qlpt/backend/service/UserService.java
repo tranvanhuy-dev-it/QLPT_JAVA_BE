@@ -20,10 +20,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ContractRepository contractRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, ContractRepository contractRepository) {
+    public UserService(UserRepository userRepository, ContractRepository contractRepository, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.contractRepository = contractRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User getProfile(UUID userId) {
@@ -103,5 +105,62 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public User updateProfile(UUID userId, com.qlpt.backend.dto.UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
+        
+        user.setFullName(request.fullName());
+        user.setEmail(request.email());
+        user.setPhone(request.phone());
+        
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, com.qlpt.backend.dto.ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
+        
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không chính xác!");
+        }
+        
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public User resetPassword(UUID targetUserId, User actor) {
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng đích"));
+        
+        // Authorization check
+        if (actor.getRole() == Role.ADMIN) {
+            // Admin can reset anyone except other admins
+            if (targetUser.getRole() == Role.ADMIN && !actor.getId().equals(targetUser.getId())) {
+                throw new RuntimeException("Quản trị viên không thể đặt lại mật khẩu của quản trị viên khác");
+            }
+        } else if (actor.getRole() == Role.LANDLORD) {
+            // Landlord can only reset their tenants
+            if (targetUser.getRole() != Role.TENANT) {
+                throw new RuntimeException("Chủ trọ chỉ có quyền đặt lại mật khẩu của người thuê");
+            }
+            if (targetUser.getLandlord() == null || !targetUser.getLandlord().getId().equals(actor.getId())) {
+                throw new RuntimeException("Tài khoản người thuê này không thuộc sự quản lý của bạn");
+            }
+        } else {
+            throw new RuntimeException("Bạn không có quyền thực hiện chức năng này");
+        }
+        
+        // Reset password to their phone number, fallback to '123456' if phone is empty
+        String rawPassword = (targetUser.getPhone() != null && !targetUser.getPhone().trim().isEmpty()) 
+                ? targetUser.getPhone().trim() 
+                : "123456";
+                
+        targetUser.setPassword(passwordEncoder.encode(rawPassword));
+        return userRepository.save(targetUser);
     }
 }

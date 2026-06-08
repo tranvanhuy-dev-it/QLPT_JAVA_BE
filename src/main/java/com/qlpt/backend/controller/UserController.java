@@ -51,4 +51,31 @@ public class UserController {
         User updated = userService.toggleTenantStatusForLandlord(id, landlord);
         return ResponseEntity.ok(UserResponse.fromEntity(updated));
     }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserResponse> updateProfile(
+            @jakarta.validation.Valid @RequestBody com.qlpt.backend.dto.UpdateProfileRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        User updated = userService.updateProfile(user.getId(), request);
+        return ResponseEntity.ok(UserResponse.fromEntity(updated));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @jakarta.validation.Valid @RequestBody com.qlpt.backend.dto.ChangePasswordRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        userService.changePassword(user.getId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<UserResponse> resetPassword(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User actor = userDetails.getUser();
+        User updated = userService.resetPassword(id, actor);
+        return ResponseEntity.ok(UserResponse.fromEntity(updated));
+    }
 }
