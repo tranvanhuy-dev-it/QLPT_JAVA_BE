@@ -24,19 +24,22 @@ public class InvoiceService {
     private final RoomRepository roomRepository;
     private final ContractAddendumRepository contractAddendumRepository;
     private final ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
+    private final NotificationService notificationService;
 
     public InvoiceService(InvoiceRepository invoiceRepository,
                           InvoiceItemRepository invoiceItemRepository,
                           ContractRepository contractRepository,
                           RoomRepository roomRepository,
                           ContractAddendumRepository contractAddendumRepository,
-                          ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository) {
+                          ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository,
+                          NotificationService notificationService) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceItemRepository = invoiceItemRepository;
         this.contractRepository = contractRepository;
         this.roomRepository = roomRepository;
         this.contractAddendumRepository = contractAddendumRepository;
         this.contractAddendumExtraFeeRepository = contractAddendumExtraFeeRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -200,7 +203,22 @@ public class InvoiceService {
         }
         roomRepository.save(room);
 
-        return invoiceRepository.findWithDetailsById(finalInvoice.getId()).orElse(finalInvoice);
+        Invoice resultInvoice = invoiceRepository.findWithDetailsById(finalInvoice.getId()).orElse(finalInvoice);
+
+        // Gửi thông báo đến người thuê
+        try {
+            String title = "Hóa đơn mới được tạo";
+            String content = String.format("Hóa đơn phòng %s kỳ từ %s đến %s với số tiền %s đã được tạo. Vui lòng thanh toán sớm.",
+                    room.getRoomNumber(),
+                    start,
+                    end,
+                    String.format("%,.0f VNĐ", resultInvoice.getTotalAmount()));
+            notificationService.createNotification(contract.getTenant(), title, content, "INVOICE_NEW");
+        } catch (Exception e) {
+            System.err.println("Lỗi khi gửi thông báo hóa đơn mới: " + e.getMessage());
+        }
+
+        return resultInvoice;
     }
 
     @Transactional
@@ -218,15 +236,32 @@ public class InvoiceService {
         }
 
         invoice.setPaidAmount(newPaid);
+        boolean isFullyPaid = false;
         if (newPaid >= invoice.getTotalAmount()) {
             invoice.setStatus(InvoiceStatus.PAID);
             invoice.setPaymentDate(LocalDate.now());
+            isFullyPaid = true;
         } else if (newPaid > 0) {
             invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
         }
 
         Invoice saved = invoiceRepository.save(invoice);
-        return invoiceRepository.findWithDetailsById(saved.getId()).orElse(saved);
+        Invoice result = invoiceRepository.findWithDetailsById(saved.getId()).orElse(saved);
+
+        if (isFullyPaid) {
+            try {
+                String title = "Xác nhận thanh toán hóa đơn";
+                String content = String.format("Hóa đơn phòng %s kỳ từ %s đến %s đã được xác nhận thanh toán thành công.",
+                        result.getContract().getRoom().getRoomNumber(),
+                        result.getBillingPeriodStart(),
+                        result.getBillingPeriodEnd());
+                notificationService.createNotification(result.getContract().getTenant(), title, content, "PAYMENT_CONFIRMED");
+            } catch (Exception e) {
+                System.err.println("Lỗi khi gửi thông báo xác nhận thanh toán: " + e.getMessage());
+            }
+        }
+
+        return result;
     }
 
     @Transactional(readOnly = true)

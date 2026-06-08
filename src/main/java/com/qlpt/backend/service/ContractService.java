@@ -22,6 +22,7 @@ public class ContractService {
     private final ContractExtraFeeRepository contractExtraFeeRepository;
     private final ContractAddendumRepository contractAddendumRepository;
     private final ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
+    private final NotificationService notificationService;
 
     public ContractService(ContractRepository contractRepository,
                            RoomRepository roomRepository,
@@ -29,7 +30,8 @@ public class ContractService {
                            ExtraFeeRepository extraFeeRepository,
                            ContractExtraFeeRepository contractExtraFeeRepository,
                            ContractAddendumRepository contractAddendumRepository,
-                           ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository) {
+                           ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository,
+                           NotificationService notificationService) {
         this.contractRepository = contractRepository;
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
@@ -37,6 +39,7 @@ public class ContractService {
         this.contractExtraFeeRepository = contractExtraFeeRepository;
         this.contractAddendumRepository = contractAddendumRepository;
         this.contractAddendumExtraFeeRepository = contractAddendumExtraFeeRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -121,7 +124,20 @@ public class ContractService {
             }
         }
 
-        return contractRepository.findWithDetailsById(savedContract.getId()).orElse(savedContract);
+        Contract resultContract = contractRepository.findWithDetailsById(savedContract.getId()).orElse(savedContract);
+
+        // Gửi thông báo đến người thuê
+        try {
+            String title = "Hợp đồng thuê phòng hoạt động";
+            String content = String.format("Hợp đồng thuê phòng %s tại nhà trọ %s của bạn đã được kích hoạt thành công.",
+                    room.getRoomNumber(),
+                    room.getBoardingHouse().getName());
+            notificationService.createNotification(tenant, title, content, "CONTRACT_ACTIVE");
+        } catch (Exception e) {
+            System.err.println("Lỗi khi gửi thông báo hợp đồng hoạt động: " + e.getMessage());
+        }
+
+        return resultContract;
     }
 
     @Transactional
