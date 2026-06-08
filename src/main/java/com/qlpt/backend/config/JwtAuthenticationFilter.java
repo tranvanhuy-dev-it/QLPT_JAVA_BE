@@ -47,6 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     
                     boolean isExcluded = requestURI.startsWith("/api/auth/") 
                                       || requestURI.startsWith("/api/subscriptions/")
+                                      || requestURI.equals("/api/users/profile")
+                                      || requestURI.equals("/api/users/change-password")
+                                      || requestURI.startsWith("/api/notifications")
                                       || user.getRole() == com.qlpt.backend.entity.Role.ADMIN;
                                       
                     if (!isExcluded) {
