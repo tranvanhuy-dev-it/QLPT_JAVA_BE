@@ -62,4 +62,10 @@ public class BoardingHouse {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<ExtraFee> extraFees = new ArrayList<>();
+
+    @OneToMany(mappedBy = "boardingHouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<BoardingHouseCamera> cameras = new ArrayList<>();
 }
