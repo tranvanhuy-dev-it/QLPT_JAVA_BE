@@ -25,6 +25,14 @@ public class BoardingHouseCameraController {
         this.cameraService = cameraService;
     }
 
+    @GetMapping("/cameras")
+    public ResponseEntity<List<BoardingHouseCameraResponse>> getAllCameras(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User landlord = userDetails.getUser();
+        List<BoardingHouseCameraResponse> cameras = cameraService.getAllCameras(landlord);
+        return ResponseEntity.ok(cameras);
+    }
+
     @GetMapping("/{houseId}/cameras")
     public ResponseEntity<List<BoardingHouseCameraResponse>> getCameras(
             @PathVariable UUID houseId,

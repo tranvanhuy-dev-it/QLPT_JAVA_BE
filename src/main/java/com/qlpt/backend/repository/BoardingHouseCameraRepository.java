@@ -9,4 +9,5 @@ import java.util.UUID;
 @Repository
 public interface BoardingHouseCameraRepository extends JpaRepository<BoardingHouseCamera, UUID> {
     List<BoardingHouseCamera> findByBoardingHouseIdOrderByCreatedAtAsc(UUID boardingHouseId);
+    List<BoardingHouseCamera> findByBoardingHouseLandlordIdOrderByCreatedAtAsc(UUID landlordId);
 }

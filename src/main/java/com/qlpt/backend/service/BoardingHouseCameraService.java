@@ -49,6 +49,14 @@ public class BoardingHouseCameraService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<BoardingHouseCameraResponse> getAllCameras(User landlord) {
+        List<BoardingHouseCamera> cameras = boardingHouseCameraRepository.findByBoardingHouseLandlordIdOrderByCreatedAtAsc(landlord.getId());
+        return cameras.stream()
+                .map(BoardingHouseCameraResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public BoardingHouseCameraResponse addCamera(UUID boardingHouseId, BoardingHouseCameraCreateRequest request, User landlord) {
         BoardingHouse house = getBoardingHouseAndVerifyLandlord(boardingHouseId, landlord);
