@@ -2,3 +2,9 @@
 /target/
 .agent
 .playwright-mcp
+
+# Local configuration with real credentials - NEVER commit these
+src/main/resources/application-local.yml
+src/main/resources/application-local.yaml
+*.env
+.env*
