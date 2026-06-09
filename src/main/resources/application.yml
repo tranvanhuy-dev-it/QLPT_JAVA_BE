@@ -19,6 +19,18 @@ spring:
       connection-timeout: 20000
       max-lifetime: 1800000
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:your_email@gmail.com}
+    password: ${MAIL_PASSWORD:your_app_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   jpa:
     open-in-view: false
     hibernate:
