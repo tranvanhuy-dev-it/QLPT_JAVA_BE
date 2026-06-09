@@ -35,15 +35,18 @@ public class PaymentReminderScheduler {
         
         for (Contract contract : activeContracts) {
             try {
-                int startDay = contract.getStartDate().getDayOfMonth();
-                boolean isReminderDay = false;
+                Integer billingDay = contract.getFixedBillingDay();
+                if (billingDay == null || billingDay < 1 || billingDay > 31) {
+                    billingDay = contract.getStartDate().getDayOfMonth();
+                }
                 
-                if (tomorrowDay == startDay) {
+                boolean isReminderDay = false;
+                if (tomorrowDay == billingDay) {
                     isReminderDay = true;
                 } else {
                     // Xử lý các tháng ngắn ngày (ví dụ: ngày thanh toán là 31 nhưng tháng này chỉ có 30 ngày)
                     int maxTomorrowMonth = tomorrow.lengthOfMonth();
-                    if (startDay > maxTomorrowMonth && tomorrowDay == maxTomorrowMonth) {
+                    if (billingDay > maxTomorrowMonth && tomorrowDay == maxTomorrowMonth) {
                         isReminderDay = true;
                     }
                 }
