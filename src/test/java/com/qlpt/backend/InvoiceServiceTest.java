@@ -146,13 +146,13 @@ public class InvoiceServiceTest {
         assertNotNull(invoice);
 
         // Tính toán kiểm chứng:
-        // Tiền phòng lẻ: (3,100,000 / 31 ngày của tháng 5) * 16 ngày = 1,600,000
-        assertEquals(1600000.0, invoice.getRoomPrice(), "Tiền phòng lẻ chưa chính xác");
+        // Tiền phòng lẻ: Math.round((3,100,000 / 30) * 16) = 1,653,333
+        assertEquals(1653333.0, invoice.getRoomPrice(), "Tiền phòng lẻ chưa chính xác");
 
         // Tiền điện: (150 - 100) * 3500 = 175,000
         // Tiền nước: (25 - 20) * 15000 = 75,000
-        // Tổng cộng = 1,600,000 + 175,000 + 75,000 = 1,850,000
-        assertEquals(1850000.0, invoice.getTotalAmount(), "Tổng tiền hóa đơn chưa chính xác");
+        // Tổng cộng = 1,653,333 + 175,000 + 75,000 = 1,903,333
+        assertEquals(1903333.0, invoice.getTotalAmount(), "Tổng tiền hóa đơn chưa chính xác");
 
         // Kiểm tra snapshot fields
         assertEquals(WaterBillingType.BY_INDEX, invoice.getWaterBillingType());
@@ -192,8 +192,8 @@ public class InvoiceServiceTest {
 
         // THEN
         assertNotNull(invoice);
-        // Trọn tháng -> tính đủ tiền phòng
-        assertEquals(3100000.0, invoice.getRoomPrice(), "Tiền phòng trọn tháng chưa chính xác");
+        // Tính tỷ lệ theo 29 ngày: Math.round((3,100,000 / 30) * 29) = 2,996,667
+        assertEquals(2996667.0, invoice.getRoomPrice(), "Tiền phòng lẻ theo ngày chưa chính xác");
     }
 
     @Test
@@ -232,8 +232,9 @@ public class InvoiceServiceTest {
         // THEN
         assertNotNull(invoice);
         // Tiền nước: 3 người * 100,000 = 300,000
+        // Tiền phòng cho 29 ngày: Math.round((3,100,000 / 30) * 29) = 2,996,667
         double expectedWater = 300000.0;
-        double expectedTotal = 3100000.0 + expectedWater; // phòng + nước (điện không đổi = 0)
+        double expectedTotal = 2996667.0 + expectedWater; // phòng + nước (điện không đổi = 0)
         assertEquals(expectedTotal, invoice.getTotalAmount(), "Tổng tiền tính nước theo đầu người chưa chính xác");
         assertEquals(WaterBillingType.FIXED_PER_PERSON, invoice.getWaterBillingType());
         assertEquals(3, invoice.getNumberOfTenants());
@@ -277,14 +278,15 @@ public class InvoiceServiceTest {
         assertNotNull(invoice);
         // Kiểm tra dùng giá từ phụ lục mới
         assertEquals(3500000.0, invoice.getContractedRoomPrice(), "Snapshot đơn giá phòng phải từ phụ lục mới");
-        assertEquals(3500000.0, invoice.getRoomPrice(), "Tiền phòng phải dùng giá từ phụ lục mới");
+        // Tiền phòng cho 29 ngày: Math.round((3,500,000 / 30) * 29) = 3,383,333
+        assertEquals(3383333.0, invoice.getRoomPrice(), "Tiền phòng phải dùng giá từ phụ lục mới");
         assertEquals(4000.0, invoice.getElectricityRate(), "Giá điện phải từ phụ lục mới");
         assertEquals(18000.0, invoice.getWaterRate(), "Giá nước phải từ phụ lục mới");
 
         // Tiền điện: 20 * 4000 = 80,000
         // Tiền nước: 5 * 18000 = 90,000
-        // Tổng: 3,500,000 + 80,000 + 90,000 = 3,670,000
-        assertEquals(3670000.0, invoice.getTotalAmount(), "Tổng tiền phải dùng giá từ phụ lục mới");
+        // Tổng: 3,383,333 + 80,000 + 90,000 = 3,553,333
+        assertEquals(3553333.0, invoice.getTotalAmount(), "Tổng tiền phải dùng giá từ phụ lục mới");
     }
 
     @Test
@@ -324,6 +326,7 @@ public class InvoiceServiceTest {
         // Trực quan kỳ 2: có hóa đơn cũ kết thúc ngày 05/06/2026 -> gợi ý bắt đầu 06/06/2026 và kết thúc ngày 05/07/2026
         Invoice lastInvoice = Invoice.builder()
                 .contract(contract)
+                .invoiceDate(LocalDate.of(2026, 6, 5))
                 .billingPeriodStart(LocalDate.of(2026, 5, 20))
                 .billingPeriodEnd(LocalDate.of(2026, 6, 5))
                 .build();

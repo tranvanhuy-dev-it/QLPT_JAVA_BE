@@ -89,20 +89,9 @@ public class InvoiceService {
         // ==========================================
         // 1. TÍNH TIỀN PHÒNG (Room Price Proration)
         // ==========================================
-        // Kiểm tra xem kỳ này có trọn vẹn một tháng không
-        // Trọn vẹn = ngày bắt đầu là ngày cuối tháng trước (hoặc ngày 1) và ngày kết thúc là ngày cuối tháng
         long stayedDays = ChronoUnit.DAYS.between(start, end);
-        int daysInMonth = start.lengthOfMonth();
-        boolean isFullMonth = stayedDays >= daysInMonth - 1; // cho phép sai số 1 ngày
-
-        double roomPrice;
-        if (isFullMonth) {
-            roomPrice = snapshotRoomPrice;
-        } else {
-            // Ở chưa đủ tháng -> Chia tiền phòng theo ngày thực tế ở
-            double dailyRate = snapshotRoomPrice / daysInMonth;
-            roomPrice = Math.round(dailyRate * stayedDays); // Làm tròn tiền phòng
-        }
+        double dailyRate = snapshotRoomPrice / 30.0;
+        double roomPrice = Math.round(dailyRate * stayedDays); // Làm tròn tiền phòng
 
         // ==========================================
         // 2. TÍNH TIỀN ĐIỆN
@@ -338,7 +327,7 @@ public class InvoiceService {
                 java.util.Optional<Invoice> lastInvoiceOpt = invoiceRepository.findFirstByContractIdOrderByBillingPeriodEndDesc(contract.getId());
                 LocalDate nextStart;
                 if (lastInvoiceOpt.isPresent()) {
-                    nextStart = lastInvoiceOpt.get().getBillingPeriodEnd().plusDays(1);
+                    nextStart = lastInvoiceOpt.get().getInvoiceDate().plusDays(1);
                 } else {
                     nextStart = contract.getStartDate();
                 }
