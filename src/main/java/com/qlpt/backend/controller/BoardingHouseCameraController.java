@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/boarding-houses")
-@PreAuthorize("hasRole('LANDLORD')")
+@PreAuthorize("hasAnyRole('LANDLORD', 'TENANT')")
 public class BoardingHouseCameraController {
 
     private final BoardingHouseCameraService cameraService;
@@ -25,7 +25,17 @@ public class BoardingHouseCameraController {
         this.cameraService = cameraService;
     }
 
+    @GetMapping("/tenant/cameras")
+    @PreAuthorize("hasRole('TENANT')")
+    public ResponseEntity<List<BoardingHouseCameraResponse>> getTenantCameras(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User tenant = userDetails.getUser();
+        List<BoardingHouseCameraResponse> cameras = cameraService.getTenantCameras(tenant);
+        return ResponseEntity.ok(cameras);
+    }
+
     @GetMapping("/cameras")
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<List<BoardingHouseCameraResponse>> getAllCameras(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User landlord = userDetails.getUser();
@@ -34,6 +44,7 @@ public class BoardingHouseCameraController {
     }
 
     @GetMapping("/{houseId}/cameras")
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<List<BoardingHouseCameraResponse>> getCameras(
             @PathVariable UUID houseId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -43,6 +54,7 @@ public class BoardingHouseCameraController {
     }
 
     @PostMapping("/{houseId}/cameras")
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<BoardingHouseCameraResponse> addCamera(
             @PathVariable UUID houseId,
             @Valid @RequestBody BoardingHouseCameraCreateRequest request,
@@ -53,6 +65,7 @@ public class BoardingHouseCameraController {
     }
 
     @PutMapping("/cameras/{cameraId}")
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<BoardingHouseCameraResponse> updateCamera(
             @PathVariable UUID cameraId,
             @Valid @RequestBody BoardingHouseCameraCreateRequest request,
@@ -63,6 +76,7 @@ public class BoardingHouseCameraController {
     }
 
     @DeleteMapping("/cameras/{cameraId}")
+    @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<Void> deleteCamera(
             @PathVariable UUID cameraId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
