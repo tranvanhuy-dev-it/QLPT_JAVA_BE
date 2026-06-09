@@ -4,6 +4,7 @@ import com.qlpt.backend.dto.ContactRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,6 +19,7 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
+    @Async
     public void sendContactEmail(ContactRequest request) {
         // Kiểm tra xem đã cấu hình email thật chưa (nếu vẫn để giá trị mặc định hoặc trống thì chạy giả lập)
         if (adminEmail == null || adminEmail.equals("your_email@gmail.com") || adminEmail.trim().isEmpty()) {
