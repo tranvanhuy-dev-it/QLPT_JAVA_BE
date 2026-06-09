@@ -1,12 +1,14 @@
 package com.qlpt.backend.service;
 
 import com.qlpt.backend.dto.ContactRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class EmailService {
 
@@ -21,24 +23,19 @@ public class EmailService {
 
     @Async
     public void sendContactEmail(ContactRequest request) {
-        // Kiểm tra xem đã cấu hình email thật chưa (nếu vẫn để giá trị mặc định hoặc trống thì chạy giả lập)
+        log.info("[EmailService] Bắt đầu gửi email liên hệ từ: {} <{}>", request.getName(), request.getEmail());
+        log.info("[EmailService] adminEmail được cấu hình: '{}'", adminEmail);
+
+        // Kiểm tra xem đã cấu hình email thật chưa
         if (adminEmail == null || adminEmail.equals("your_email@gmail.com") || adminEmail.trim().isEmpty()) {
-            System.out.println("=== [SMTP MOCK EMAIL SENDER] ===");
-            System.out.println("Admin Email: (Chưa cấu hình thực tế trong Backend)");
-            System.out.println("From Name:   " + request.getName());
-            System.out.println("From Email:  " + request.getEmail());
-            System.out.println("From Phone:  " + request.getPhone());
-            System.out.println("Subject:     " + request.getSubject());
-            System.out.println("Message:     " + request.getMessage());
-            System.out.println("=================================");
-            System.out.println("=== [SMTP MOCK AUTO-REPLY] ===");
-            System.out.println("To:          " + request.getEmail());
-            System.out.println("Subject:     [Nhà Trọ Thông Minh] Đã nhận yêu cầu hỗ trợ của bạn");
-            System.out.println("==============================");
+            log.warn("[EmailService] SMTP chưa được cấu hình - chạy chế độ MOCK");
+            log.warn("[EmailService] From: {} <{}> | Subject: {}", request.getName(), request.getEmail(), request.getSubject());
             return;
         }
 
         try {
+            log.info("[EmailService] Đang gửi email thông báo tới admin: {}", adminEmail);
+
             // 1. Gửi thông báo tới Admin
             SimpleMailMessage adminMessage = new SimpleMailMessage();
             adminMessage.setFrom(adminEmail);
@@ -59,17 +56,20 @@ public class EmailService {
 
             adminMessage.setText(adminContent);
             mailSender.send(adminMessage);
+            log.info("[EmailService] ✅ Đã gửi email thông báo admin thành công!");
 
             // 2. Gửi email phản hồi tự động tới người dùng
             sendAutoReplyEmail(request);
 
         } catch (Exception e) {
-            throw new RuntimeException("Không thể gửi email hỗ trợ qua SMTP: " + e.getMessage());
+            log.error("[EmailService] ❌ Lỗi khi gửi email SMTP: {}", e.getMessage(), e);
         }
     }
 
     private void sendAutoReplyEmail(ContactRequest request) {
         try {
+            log.info("[EmailService] Đang gửi auto-reply tới: {}", request.getEmail());
+
             SimpleMailMessage replyMessage = new SimpleMailMessage();
             replyMessage.setFrom(adminEmail);
             replyMessage.setTo(request.getEmail());
@@ -95,9 +95,10 @@ public class EmailService {
 
             replyMessage.setText(replyContent);
             mailSender.send(replyMessage);
+            log.info("[EmailService] ✅ Đã gửi auto-reply tới {} thành công!", request.getEmail());
+
         } catch (Exception e) {
-            // Ghi log nhưng không ném lỗi để không ảnh hưởng luồng chính
-            System.err.println("[EmailService] Không thể gửi auto-reply tới " + request.getEmail() + ": " + e.getMessage());
+            log.error("[EmailService] ❌ Không thể gửi auto-reply tới {}: {}", request.getEmail(), e.getMessage(), e);
         }
     }
 }
