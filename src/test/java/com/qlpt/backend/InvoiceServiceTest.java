@@ -316,12 +316,12 @@ public class InvoiceServiceTest {
             BulkBillingRoomStatus status = statuses.get(0);
             assertTrue(status.isHasActiveContract());
             assertEquals(LocalDate.of(2026, 5, 20), status.getNextBillingPeriodStart());
-            assertEquals(LocalDate.of(2026, 5, 25), status.getNextBillingPeriodEnd());
+            assertEquals(LocalDate.of(2026, 6, 5), status.getNextBillingPeriodEnd());
             assertEquals(LocalDate.of(2026, 5, 20), status.getContractStartDate());
             assertEquals(5, status.getFixedBillingDay());
         }
 
-        // Trực quan kỳ 2: có hóa đơn cũ kết thúc ngày 05/06/2026 -> gợi ý bắt đầu 06/06/2026 và kết thúc ngày hôm nay (09/06/2026)
+        // Trực quan kỳ 2: có hóa đơn cũ kết thúc ngày 05/06/2026 -> gợi ý bắt đầu 06/06/2026 và kết thúc ngày 05/07/2026
         Invoice lastInvoice = Invoice.builder()
                 .contract(contract)
                 .billingPeriodStart(LocalDate.of(2026, 5, 20))
@@ -342,7 +342,7 @@ public class InvoiceServiceTest {
             assertEquals(1, statuses2.size());
             BulkBillingRoomStatus status2 = statuses2.get(0);
             assertEquals(LocalDate.of(2026, 6, 6), status2.getNextBillingPeriodStart());
-            assertEquals(LocalDate.of(2026, 6, 9), status2.getNextBillingPeriodEnd());
+            assertEquals(LocalDate.of(2026, 7, 5), status2.getNextBillingPeriodEnd());
         }
     }
 }

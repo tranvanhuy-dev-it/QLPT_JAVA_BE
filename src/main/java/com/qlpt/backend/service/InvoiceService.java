@@ -344,10 +344,33 @@ public class InvoiceService {
                 }
                 builder.nextBillingPeriodStart(nextStart);
 
-                // Tính toán gợi ý ngày kết thúc (nextBillingPeriodEnd) = Ngày hiện tại lập hóa đơn (LocalDate.now())
-                LocalDate nextEnd = LocalDate.now();
-                if (nextEnd.isBefore(nextStart) || nextEnd.isEqual(nextStart)) {
-                    nextEnd = nextStart.plusDays(1);
+                // Tính toán gợi ý ngày kết thúc (nextBillingPeriodEnd) dựa trên ngày cố định
+                LocalDate nextEnd;
+                Integer billingDay = contract.getFixedBillingDay();
+                if (billingDay != null && billingDay >= 1 && billingDay <= 31) {
+                    // Nếu thanh toán theo ngày cố định
+                    LocalDate candidateEnd = nextStart;
+                    int targetYear = nextStart.getYear();
+                    int targetMonth = nextStart.getMonthValue();
+                    
+                    try {
+                        candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
+                    } catch (Exception e) {}
+
+                    if (candidateEnd.isBefore(nextStart) || candidateEnd.isEqual(nextStart)) {
+                        targetMonth++;
+                        if (targetMonth > 12) {
+                            targetMonth = 1;
+                            targetYear++;
+                        }
+                        try {
+                            candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
+                        } catch (Exception e) {}
+                    }
+                    nextEnd = candidateEnd;
+                } else {
+                    // Mặc định tính từ ngày chuyển vào -> gợi ý tròn 1 tháng (trừ 1 ngày)
+                    nextEnd = nextStart.plusMonths(1).minusDays(1);
                 }
                 builder.nextBillingPeriodEnd(nextEnd);
             } else {
