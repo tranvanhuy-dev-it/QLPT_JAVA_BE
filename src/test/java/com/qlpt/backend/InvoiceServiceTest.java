@@ -302,17 +302,23 @@ public class InvoiceServiceTest {
         // Trực quan kỳ 1: chưa có hóa đơn cũ -> gợi ý từ ngày start (20/05/2026) đến ngày cố định tiếp theo (05/06/2026)
         when(invoiceRepository.findFirstByContractIdOrderByBillingPeriodEndDesc(contract.getId())).thenReturn(Optional.empty());
         
-        // WHEN
-        List<BulkBillingRoomStatus> statuses = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
-        
-        // THEN
-        assertNotNull(statuses);
-        assertEquals(1, statuses.size());
-        BulkBillingRoomStatus status = statuses.get(0);
-        assertTrue(status.isHasActiveContract());
-        assertEquals(LocalDate.of(2026, 5, 20), status.getNextBillingPeriodStart());
-        assertEquals(LocalDate.of(2026, 6, 5), status.getNextBillingPeriodEnd());
-        assertEquals(5, status.getFixedBillingDay());
+        LocalDate mockToday1 = LocalDate.of(2026, 5, 25);
+        try (org.mockito.MockedStatic<LocalDate> mockedLocalDate = org.mockito.Mockito.mockStatic(LocalDate.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            // Giả lập hôm nay là 25/05/2026 (trước ngày 05/06/2026)
+            mockedLocalDate.when(LocalDate::now).thenReturn(mockToday1);
+            
+            // WHEN
+            List<BulkBillingRoomStatus> statuses = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
+            
+            // THEN
+            assertNotNull(statuses);
+            assertEquals(1, statuses.size());
+            BulkBillingRoomStatus status = statuses.get(0);
+            assertTrue(status.isHasActiveContract());
+            assertEquals(LocalDate.of(2026, 5, 20), status.getNextBillingPeriodStart());
+            assertEquals(LocalDate.of(2026, 6, 5), status.getNextBillingPeriodEnd());
+            assertEquals(5, status.getFixedBillingDay());
+        }
 
         // Trực quan kỳ 2: có hóa đơn cũ kết thúc ngày 05/06/2026 -> gợi ý bắt đầu 06/06/2026 và kết thúc ngày 05/07/2026
         Invoice lastInvoice = Invoice.builder()
@@ -322,13 +328,20 @@ public class InvoiceServiceTest {
                 .build();
         when(invoiceRepository.findFirstByContractIdOrderByBillingPeriodEndDesc(contract.getId())).thenReturn(Optional.of(lastInvoice));
 
-        // WHEN
-        List<BulkBillingRoomStatus> statuses2 = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
+        LocalDate mockToday2 = LocalDate.of(2026, 6, 9);
+        try (org.mockito.MockedStatic<LocalDate> mockedLocalDate2 = org.mockito.Mockito.mockStatic(LocalDate.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            // Giả lập hôm nay là 09/06/2026 (sau ngày 05/06/2026)
+            mockedLocalDate2.when(LocalDate::now).thenReturn(mockToday2);
+            
+            // WHEN
+            List<BulkBillingRoomStatus> statuses2 = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
 
-        // THEN
-        assertNotNull(statuses2);
-        BulkBillingRoomStatus status2 = statuses2.get(0);
-        assertEquals(LocalDate.of(2026, 6, 6), status2.getNextBillingPeriodStart());
-        assertEquals(LocalDate.of(2026, 7, 5), status2.getNextBillingPeriodEnd());
+            // THEN
+            assertNotNull(statuses2);
+            assertEquals(1, statuses2.size());
+            BulkBillingRoomStatus status2 = statuses2.get(0);
+            assertEquals(LocalDate.of(2026, 6, 6), status2.getNextBillingPeriodStart());
+            assertEquals(LocalDate.of(2026, 7, 5), status2.getNextBillingPeriodEnd());
+        }
     }
 }

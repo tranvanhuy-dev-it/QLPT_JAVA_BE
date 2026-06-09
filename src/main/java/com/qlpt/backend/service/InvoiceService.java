@@ -347,16 +347,17 @@ public class InvoiceService {
                 LocalDate nextEnd;
                 Integer billingDay = contract.getFixedBillingDay();
                 if (billingDay != null && billingDay >= 1 && billingDay <= 31) {
-                    // Nếu thanh toán theo ngày cố định
-                    LocalDate candidateEnd = nextStart;
-                    int targetYear = nextStart.getYear();
-                    int targetMonth = nextStart.getMonthValue();
+                    // "ket thu la ngay thanh toan hoa don cua thang tiep theo neu nhu da qua ngay do hoac cua thang do neu chua qua"
+                    LocalDate today = LocalDate.now();
+                    int targetYear = today.getYear();
+                    int targetMonth = today.getMonthValue();
                     
+                    LocalDate candidateEnd = today;
                     try {
                         candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
                     } catch (Exception e) {}
-
-                    if (candidateEnd.isBefore(nextStart) || candidateEnd.isEqual(nextStart)) {
+                    
+                    if (today.isAfter(candidateEnd)) {
                         targetMonth++;
                         if (targetMonth > 12) {
                             targetMonth = 1;
@@ -367,6 +368,18 @@ public class InvoiceService {
                         } catch (Exception e) {}
                     }
                     nextEnd = candidateEnd;
+                    
+                    // Bảo đảm nextEnd phải sau nextStart
+                    while (nextEnd.isBefore(nextStart) || nextEnd.isEqual(nextStart)) {
+                        targetMonth++;
+                        if (targetMonth > 12) {
+                            targetMonth = 1;
+                            targetYear++;
+                        }
+                        try {
+                            nextEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
+                        } catch (Exception e) {}
+                    }
                 } else {
                     // Mặc định tính từ ngày chuyển vào -> gợi ý tròn 1 tháng (trừ 1 ngày)
                     nextEnd = nextStart.plusMonths(1).minusDays(1);
