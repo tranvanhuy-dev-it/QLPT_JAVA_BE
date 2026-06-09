@@ -25,6 +25,7 @@ public class BulkBillingRoomStatus {
     private String tenantName;
     private LocalDate nextBillingPeriodStart;
     private LocalDate nextBillingPeriodEnd;
+    private LocalDate contractStartDate;
     private Integer fixedBillingDay;
     private double defaultElectricityRate;
     private double defaultWaterRate;

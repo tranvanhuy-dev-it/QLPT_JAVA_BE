@@ -331,6 +331,7 @@ public class InvoiceService {
                 builder.hasActiveContract(true)
                         .contractId(contract.getId())
                         .tenantName(contract.getTenant().getFullName())
+                        .contractStartDate(contract.getStartDate())
                         .fixedBillingDay(contract.getFixedBillingDay());
 
                 // Tìm hóa đơn cuối cùng để biết ngày bắt đầu
@@ -343,46 +344,10 @@ public class InvoiceService {
                 }
                 builder.nextBillingPeriodStart(nextStart);
 
-                // Tính toán gợi ý ngày kết thúc (nextBillingPeriodEnd)
-                LocalDate nextEnd;
-                Integer billingDay = contract.getFixedBillingDay();
-                if (billingDay != null && billingDay >= 1 && billingDay <= 31) {
-                    // "ket thu la ngay thanh toan hoa don cua thang tiep theo neu nhu da qua ngay do hoac cua thang do neu chua qua"
-                    LocalDate today = LocalDate.now();
-                    int targetYear = today.getYear();
-                    int targetMonth = today.getMonthValue();
-                    
-                    LocalDate candidateEnd = today;
-                    try {
-                        candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
-                    } catch (Exception e) {}
-                    
-                    if (today.isAfter(candidateEnd)) {
-                        targetMonth++;
-                        if (targetMonth > 12) {
-                            targetMonth = 1;
-                            targetYear++;
-                        }
-                        try {
-                            candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
-                        } catch (Exception e) {}
-                    }
-                    nextEnd = candidateEnd;
-                    
-                    // Bảo đảm nextEnd phải sau nextStart
-                    while (nextEnd.isBefore(nextStart) || nextEnd.isEqual(nextStart)) {
-                        targetMonth++;
-                        if (targetMonth > 12) {
-                            targetMonth = 1;
-                            targetYear++;
-                        }
-                        try {
-                            nextEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
-                        } catch (Exception e) {}
-                    }
-                } else {
-                    // Mặc định tính từ ngày chuyển vào -> gợi ý tròn 1 tháng (trừ 1 ngày)
-                    nextEnd = nextStart.plusMonths(1).minusDays(1);
+                // Tính toán gợi ý ngày kết thúc (nextBillingPeriodEnd) = Ngày hiện tại lập hóa đơn (LocalDate.now())
+                LocalDate nextEnd = LocalDate.now();
+                if (nextEnd.isBefore(nextStart) || nextEnd.isEqual(nextStart)) {
+                    nextEnd = nextStart.plusDays(1);
                 }
                 builder.nextBillingPeriodEnd(nextEnd);
             } else {
