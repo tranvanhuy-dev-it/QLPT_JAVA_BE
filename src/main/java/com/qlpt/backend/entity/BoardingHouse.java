@@ -47,6 +47,9 @@ public class BoardingHouse {
     @Column(name = "water_billing_type", nullable = false)
     private WaterBillingType waterBillingType; // BY_INDEX, FIXED_PER_PERSON
 
+    @Column(name = "fixed_billing_day")
+    private Integer fixedBillingDay; // e.g. 5 for 5th of every month, null if billing from move-in date
+
     @Column(name = "rules", columnDefinition = "TEXT")
     private String rules;
 

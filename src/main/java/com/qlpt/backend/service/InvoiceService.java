@@ -1,6 +1,8 @@
 package com.qlpt.backend.service;
 
 import com.qlpt.backend.dto.InvoiceCreateRequest;
+import com.qlpt.backend.dto.BulkBillingRoomStatus;
+import com.qlpt.backend.dto.BulkInvoiceCreateRequest;
 import com.qlpt.backend.entity.*;
 import com.qlpt.backend.exception.ResourceNotFoundException;
 import com.qlpt.backend.repository.*;
@@ -24,6 +26,7 @@ public class InvoiceService {
     private final RoomRepository roomRepository;
     private final ContractAddendumRepository contractAddendumRepository;
     private final ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
+    private final BoardingHouseRepository boardingHouseRepository;
     private final NotificationService notificationService;
 
     public InvoiceService(InvoiceRepository invoiceRepository,
@@ -32,6 +35,7 @@ public class InvoiceService {
                           RoomRepository roomRepository,
                           ContractAddendumRepository contractAddendumRepository,
                           ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository,
+                          BoardingHouseRepository boardingHouseRepository,
                           NotificationService notificationService) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceItemRepository = invoiceItemRepository;
@@ -39,6 +43,7 @@ public class InvoiceService {
         this.roomRepository = roomRepository;
         this.contractAddendumRepository = contractAddendumRepository;
         this.contractAddendumExtraFeeRepository = contractAddendumExtraFeeRepository;
+        this.boardingHouseRepository = boardingHouseRepository;
         this.notificationService = notificationService;
     }
 
@@ -294,5 +299,110 @@ public class InvoiceService {
         // Tải hóa đơn để kiểm tra quyền truy cập trước
         getInvoiceById(invoiceId, user);
         return invoiceItemRepository.findByInvoiceId(invoiceId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BulkBillingRoomStatus> getBillingStatusForBoardingHouse(UUID bhId, User landlord) {
+        BoardingHouse boardingHouse = boardingHouseRepository.findById(bhId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dãy trọ"));
+
+        if (!boardingHouse.getLandlord().getId().equals(landlord.getId())) {
+            throw new RuntimeException("Bạn không có quyền quản lý dãy trọ này");
+        }
+
+        List<Room> rooms = roomRepository.findByBoardingHouseId(bhId);
+        List<BulkBillingRoomStatus> result = new ArrayList<>();
+
+        for (Room room : rooms) {
+            java.util.Optional<Contract> activeContractOpt = contractRepository.findByRoomIdAndStatus(room.getId(), ContractStatus.ACTIVE);
+            
+            BulkBillingRoomStatus.BulkBillingRoomStatusBuilder builder = BulkBillingRoomStatus.builder()
+                    .roomId(room.getId())
+                    .roomNumber(room.getRoomNumber())
+                    .roomStatus(room.getStatus())
+                    .currentElectricityIndex(room.getCurrentElectricityIndex())
+                    .currentWaterIndex(room.getCurrentWaterIndex())
+                    .defaultElectricityRate(boardingHouse.getDefaultElectricityRate())
+                    .defaultWaterRate(boardingHouse.getDefaultWaterRate())
+                    .waterBillingType(boardingHouse.getWaterBillingType());
+
+            if (activeContractOpt.isPresent()) {
+                Contract contract = activeContractOpt.get();
+                builder.hasActiveContract(true)
+                        .contractId(contract.getId())
+                        .tenantName(contract.getTenant().getFullName())
+                        .fixedBillingDay(contract.getFixedBillingDay());
+
+                // Tìm hóa đơn cuối cùng để biết ngày bắt đầu
+                java.util.Optional<Invoice> lastInvoiceOpt = invoiceRepository.findFirstByContractIdOrderByBillingPeriodEndDesc(contract.getId());
+                LocalDate nextStart;
+                if (lastInvoiceOpt.isPresent()) {
+                    nextStart = lastInvoiceOpt.get().getBillingPeriodEnd().plusDays(1);
+                } else {
+                    nextStart = contract.getStartDate();
+                }
+                builder.nextBillingPeriodStart(nextStart);
+
+                // Tính toán gợi ý ngày kết thúc (nextBillingPeriodEnd)
+                LocalDate nextEnd;
+                Integer billingDay = contract.getFixedBillingDay();
+                if (billingDay != null && billingDay >= 1 && billingDay <= 31) {
+                    // Nếu thanh toán theo ngày cố định
+                    LocalDate candidateEnd = nextStart;
+                    int targetYear = nextStart.getYear();
+                    int targetMonth = nextStart.getMonthValue();
+                    
+                    try {
+                        candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
+                    } catch (Exception e) {}
+
+                    if (candidateEnd.isBefore(nextStart) || candidateEnd.isEqual(nextStart)) {
+                        targetMonth++;
+                        if (targetMonth > 12) {
+                            targetMonth = 1;
+                            targetYear++;
+                        }
+                        try {
+                            candidateEnd = LocalDate.of(targetYear, targetMonth, Math.min(billingDay, LocalDate.of(targetYear, targetMonth, 1).lengthOfMonth()));
+                        } catch (Exception e) {}
+                    }
+                    nextEnd = candidateEnd;
+                } else {
+                    // Mặc định tính từ ngày chuyển vào -> gợi ý tròn 1 tháng (trừ 1 ngày)
+                    nextEnd = nextStart.plusMonths(1).minusDays(1);
+                }
+                builder.nextBillingPeriodEnd(nextEnd);
+            } else {
+                builder.hasActiveContract(false);
+            }
+
+            result.add(builder.build());
+        }
+
+        return result;
+    }
+
+    @Transactional
+    public void createBulkInvoices(BulkInvoiceCreateRequest request, User landlord) {
+        if (request.getReadings() == null || request.getReadings().isEmpty()) {
+            return;
+        }
+
+        for (BulkInvoiceCreateRequest.RoomReading reading : request.getReadings()) {
+            if (reading.getContractId() == null) {
+                continue;
+            }
+
+            InvoiceCreateRequest createReq = new InvoiceCreateRequest();
+            createReq.setContractId(reading.getContractId());
+            createReq.setInvoiceDate(request.getInvoiceDate());
+            createReq.setBillingPeriodStart(reading.getBillingPeriodStart());
+            createReq.setBillingPeriodEnd(reading.getBillingPeriodEnd());
+            createReq.setNewElectricityIndex(reading.getNewElectricityIndex());
+            createReq.setNewWaterIndex(reading.getNewWaterIndex());
+            createReq.setDiscount(reading.getDiscount());
+
+            createInvoice(createReq, landlord);
+        }
     }
 }

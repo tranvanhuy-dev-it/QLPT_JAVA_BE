@@ -4,6 +4,8 @@ import com.qlpt.backend.config.CustomUserDetails;
 import com.qlpt.backend.dto.InvoiceCreateRequest;
 import com.qlpt.backend.dto.InvoiceItemResponse;
 import com.qlpt.backend.dto.InvoiceResponse;
+import com.qlpt.backend.dto.BulkBillingRoomStatus;
+import com.qlpt.backend.dto.BulkInvoiceCreateRequest;
 import com.qlpt.backend.entity.Invoice;
 import com.qlpt.backend.entity.InvoiceItem;
 import com.qlpt.backend.entity.Role;
@@ -90,5 +92,25 @@ public class InvoiceController {
                 .map(InvoiceItemResponse::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/boarding-houses/{bhId}/billing-status")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<List<BulkBillingRoomStatus>> getBillingStatus(
+            @PathVariable UUID bhId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User landlord = userDetails.getUser();
+        List<BulkBillingRoomStatus> statuses = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
+        return ResponseEntity.ok(statuses);
+    }
+
+    @PostMapping("/bulk")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<Void> createBulkInvoices(
+            @RequestBody BulkInvoiceCreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User landlord = userDetails.getUser();
+        invoiceService.createBulkInvoices(request, landlord);
+        return ResponseEntity.ok().build();
     }
 }

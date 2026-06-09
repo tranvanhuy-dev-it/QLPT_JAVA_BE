@@ -52,6 +52,9 @@ public class Contract {
     @Column(name = "number_of_tenants", nullable = false)
     private int numberOfTenants;
 
+    @Column(name = "fixed_billing_day")
+    private Integer fixedBillingDay; // e.g. 5 for 5th of every month, null if billing from move-in date
+
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     @ToString.Exclude

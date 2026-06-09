@@ -20,5 +20,8 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
     Page<Room> findByBoardingHouseId(UUID boardingHouseId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"boardingHouse", "boardingHouse.landlord"})
+    java.util.List<Room> findByBoardingHouseId(UUID boardingHouseId);
+
+    @EntityGraph(attributePaths = {"boardingHouse", "boardingHouse.landlord"})
     Page<Room> findByBoardingHouseLandlordId(UUID landlordId, Pageable pageable);
 }

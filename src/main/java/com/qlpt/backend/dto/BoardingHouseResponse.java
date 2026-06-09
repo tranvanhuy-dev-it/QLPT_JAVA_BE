@@ -19,7 +19,8 @@ public record BoardingHouseResponse(
     String bankName,
     String bankAccountNumber,
     String bankAccountName,
-    String rules
+    String rules,
+    Integer fixedBillingDay
 ) {
     public static BoardingHouseResponse fromEntity(BoardingHouse bh) {
         return fromEntity(bh, null);
@@ -59,7 +60,8 @@ public record BoardingHouseResponse(
             bh.getBankName(),
             bh.getBankAccountNumber(),
             bh.getBankAccountName(),
-            bh.getRules()
+            bh.getRules(),
+            bh.getFixedBillingDay()
         );
     }
 }

@@ -31,6 +31,8 @@ public class ContractCreateRequest {
     @Min(value = 1, message = "Số người ở phải lớn hơn hoặc bằng 1")
     private int numberOfTenants;
 
+    private Integer fixedBillingDay;
+
     private List<ExtraFeeOverride> extraFees;
 
     @Data

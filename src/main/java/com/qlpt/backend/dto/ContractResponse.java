@@ -15,7 +15,8 @@ public record ContractResponse(
     ContractStatus status,
     RoomResponse room,
     UserResponse tenant,
-    int numberOfTenants
+    int numberOfTenants,
+    Integer fixedBillingDay
 ) {
     public static ContractResponse fromEntity(Contract contract) {
         if (contract == null) return null;
@@ -39,7 +40,8 @@ public record ContractResponse(
             contract.getStatus(),
             roomResponse,
             UserResponse.fromEntity(contract.getTenant()),
-            tenants
+            tenants,
+            contract.getFixedBillingDay()
         );
     }
 }

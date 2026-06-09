@@ -23,4 +23,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     Page<Invoice> findByContractRoomBoardingHouseLandlordId(UUID landlordId, Pageable pageable);
 
     List<Invoice> findByContractId(UUID contractId);
+
+    Optional<Invoice> findFirstByContractIdOrderByBillingPeriodEndDesc(UUID contractId);
 }

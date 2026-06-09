@@ -1,9 +1,11 @@
 package com.qlpt.backend;
 
 import com.qlpt.backend.dto.InvoiceCreateRequest;
+import com.qlpt.backend.dto.BulkBillingRoomStatus;
 import com.qlpt.backend.entity.*;
 import com.qlpt.backend.repository.*;
 import com.qlpt.backend.service.InvoiceService;
+import com.qlpt.backend.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,6 +44,12 @@ public class InvoiceServiceTest {
 
     @Mock
     private ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
+
+    @Mock
+    private BoardingHouseRepository boardingHouseRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private InvoiceService invoiceService;
@@ -276,5 +285,50 @@ public class InvoiceServiceTest {
         // Tiền nước: 5 * 18000 = 90,000
         // Tổng: 3,500,000 + 80,000 + 90,000 = 3,670,000
         assertEquals(3670000.0, invoice.getTotalAmount(), "Tổng tiền phải dùng giá từ phụ lục mới");
+    }
+
+    @Test
+    public void testGetBillingStatusForBoardingHouse_FixedBillingDay() {
+        // GIVEN
+        UUID bhId = boardingHouse.getId();
+        contract.setFixedBillingDay(5); // Ngày 5 hàng tháng
+        
+        List<Room> rooms = List.of(room);
+        
+        when(boardingHouseRepository.findById(bhId)).thenReturn(Optional.of(boardingHouse));
+        when(roomRepository.findByBoardingHouseId(bhId)).thenReturn(rooms);
+        when(contractRepository.findByRoomIdAndStatus(room.getId(), ContractStatus.ACTIVE)).thenReturn(Optional.of(contract));
+        
+        // Trực quan kỳ 1: chưa có hóa đơn cũ -> gợi ý từ ngày start (20/05/2026) đến ngày cố định tiếp theo (05/06/2026)
+        when(invoiceRepository.findFirstByContractIdOrderByBillingPeriodEndDesc(contract.getId())).thenReturn(Optional.empty());
+        
+        // WHEN
+        List<BulkBillingRoomStatus> statuses = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
+        
+        // THEN
+        assertNotNull(statuses);
+        assertEquals(1, statuses.size());
+        BulkBillingRoomStatus status = statuses.get(0);
+        assertTrue(status.isHasActiveContract());
+        assertEquals(LocalDate.of(2026, 5, 20), status.getNextBillingPeriodStart());
+        assertEquals(LocalDate.of(2026, 6, 5), status.getNextBillingPeriodEnd());
+        assertEquals(5, status.getFixedBillingDay());
+
+        // Trực quan kỳ 2: có hóa đơn cũ kết thúc ngày 05/06/2026 -> gợi ý bắt đầu 06/06/2026 và kết thúc ngày 05/07/2026
+        Invoice lastInvoice = Invoice.builder()
+                .contract(contract)
+                .billingPeriodStart(LocalDate.of(2026, 5, 20))
+                .billingPeriodEnd(LocalDate.of(2026, 6, 5))
+                .build();
+        when(invoiceRepository.findFirstByContractIdOrderByBillingPeriodEndDesc(contract.getId())).thenReturn(Optional.of(lastInvoice));
+
+        // WHEN
+        List<BulkBillingRoomStatus> statuses2 = invoiceService.getBillingStatusForBoardingHouse(bhId, landlord);
+
+        // THEN
+        assertNotNull(statuses2);
+        BulkBillingRoomStatus status2 = statuses2.get(0);
+        assertEquals(LocalDate.of(2026, 6, 6), status2.getNextBillingPeriodStart());
+        assertEquals(LocalDate.of(2026, 7, 5), status2.getNextBillingPeriodEnd());
     }
 }

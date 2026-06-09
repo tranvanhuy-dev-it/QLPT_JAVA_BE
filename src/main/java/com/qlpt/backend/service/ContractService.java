@@ -66,6 +66,8 @@ public class ContractService {
 
         double finalRoomPrice = request.getContractedRoomPrice() > 0 ? request.getContractedRoomPrice() : room.getBasePrice();
 
+        Integer fixedBillingDay = request.getFixedBillingDay() != null ? request.getFixedBillingDay() : room.getBoardingHouse().getFixedBillingDay();
+
         // Create contract
         Contract contract = Contract.builder()
                 .room(room)
@@ -75,6 +77,7 @@ public class ContractService {
                 .deposit(request.getDeposit())
                 .contractedRoomPrice(finalRoomPrice)
                 .numberOfTenants(request.getNumberOfTenants())
+                .fixedBillingDay(fixedBillingDay)
                 .status(ContractStatus.ACTIVE)
                 .build();
 
