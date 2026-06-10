@@ -3,102 +3,114 @@ package com.qlpt.backend.service;
 import com.qlpt.backend.dto.ContactRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${spring.mail.username}")
+    @Value("${app.resend.api-key:}")
+    private String resendApiKey;
+
+    @Value("${app.resend.from:onboarding@resend.dev}")
+    private String fromEmail;
+
+    @Value("${app.resend.admin-email:}")
     private String adminEmail;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
     @Async
     public void sendContactEmail(ContactRequest request) {
         log.info("[EmailService] Bắt đầu gửi email liên hệ từ: {} <{}>", request.getName(), request.getEmail());
-        log.info("[EmailService] adminEmail được cấu hình: '{}'", adminEmail);
 
-        // Kiểm tra xem đã cấu hình email thật chưa
-        if (adminEmail == null || adminEmail.equals("your_email@gmail.com") || adminEmail.trim().isEmpty()) {
-            log.warn("[EmailService] SMTP chưa được cấu hình - chạy chế độ MOCK");
+        if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
+            log.warn("[EmailService] RESEND_API_KEY chưa được cấu hình - chạy chế độ MOCK");
             log.warn("[EmailService] From: {} <{}> | Subject: {}", request.getName(), request.getEmail(), request.getSubject());
             return;
         }
 
-        try {
-            log.info("[EmailService] Đang gửi email thông báo tới admin: {}", adminEmail);
+        // 1. Gửi thông báo tới Admin
+        String adminTo = (adminEmail != null && !adminEmail.trim().isEmpty()) ? adminEmail : request.getEmail();
+        String adminBody = "Chào Admin,\n\n"
+                + "Bạn nhận được một yêu cầu liên hệ hỗ trợ mới:\n\n"
+                + "- Người gửi: " + request.getName() + "\n"
+                + "- Số điện thoại: " + request.getPhone() + "\n"
+                + "- Email: " + request.getEmail() + "\n"
+                + "- Tiêu đề: " + request.getSubject() + "\n\n"
+                + "Nội dung:\n--------------------------------------------------\n"
+                + request.getMessage()
+                + "\n--------------------------------------------------\n";
 
-            // 1. Gửi thông báo tới Admin
-            SimpleMailMessage adminMessage = new SimpleMailMessage();
-            adminMessage.setFrom(adminEmail);
-            adminMessage.setTo(adminEmail);
-            adminMessage.setReplyTo(request.getEmail());
-            adminMessage.setSubject("[Nhà Trọ Thông Minh] Yêu cầu hỗ trợ: " + request.getSubject());
+        boolean sent = sendViaResend(
+                adminTo,
+                "[Nhà Trọ Thông Minh] Yêu cầu hỗ trợ: " + request.getSubject(),
+                adminBody
+        );
 
-            String adminContent = "Chào Admin,\n\n"
-                    + "Bạn nhận được một yêu cầu liên hệ hỗ trợ mới từ hệ thống:\n\n"
-                    + "- Người gửi: " + request.getName() + "\n"
-                    + "- Số điện thoại: " + request.getPhone() + "\n"
-                    + "- Email liên hệ: " + request.getEmail() + "\n"
-                    + "- Tiêu đề: " + request.getSubject() + "\n\n"
-                    + "Nội dung chi tiết:\n"
-                    + "--------------------------------------------------\n"
-                    + request.getMessage() + "\n"
-                    + "--------------------------------------------------\n";
-
-            adminMessage.setText(adminContent);
-            mailSender.send(adminMessage);
+        if (sent) {
             log.info("[EmailService] ✅ Đã gửi email thông báo admin thành công!");
+        }
 
-            // 2. Gửi email phản hồi tự động tới người dùng
-            sendAutoReplyEmail(request);
+        // 2. Gửi auto-reply tới người dùng
+        String replyBody = "Xin chào " + request.getName() + ",\n\n"
+                + "Cảm ơn bạn đã liên hệ với chúng tôi!\n\n"
+                + "Chúng tôi đã nhận được yêu cầu hỗ trợ của bạn với tiêu đề:\n"
+                + "\"" + request.getSubject() + "\"\n\n"
+                + "Đội ngũ hỗ trợ sẽ phản hồi trong vòng 24 giờ làm việc.\n\n"
+                + "Thông tin yêu cầu:\n--------------------------------------------------\n"
+                + "Tiêu đề: " + request.getSubject() + "\n"
+                + "Nội dung: " + request.getMessage() + "\n"
+                + "--------------------------------------------------\n\n"
+                + "Trân trọng,\nĐội ngũ Nhà Trọ Thông Minh\n"
+                + "--------------------------------------------------\n"
+                + "Email này được gửi tự động, vui lòng không trả lời.\n";
 
-        } catch (Exception e) {
-            log.error("[EmailService] ❌ Lỗi khi gửi email SMTP: {}", e.getMessage(), e);
+        boolean replySent = sendViaResend(
+                request.getEmail(),
+                "[Nhà Trọ Thông Minh] Đã nhận yêu cầu hỗ trợ của bạn",
+                replyBody
+        );
+
+        if (replySent) {
+            log.info("[EmailService] ✅ Đã gửi auto-reply tới {} thành công!", request.getEmail());
         }
     }
 
-    private void sendAutoReplyEmail(ContactRequest request) {
+    private boolean sendViaResend(String to, String subject, String textBody) {
         try {
-            log.info("[EmailService] Đang gửi auto-reply tới: {}", request.getEmail());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(resendApiKey);
 
-            SimpleMailMessage replyMessage = new SimpleMailMessage();
-            replyMessage.setFrom(adminEmail);
-            replyMessage.setTo(request.getEmail());
-            replyMessage.setSubject("[Nhà Trọ Thông Minh] Đã nhận yêu cầu hỗ trợ của bạn");
+            Map<String, Object> body = Map.of(
+                    "from", fromEmail,
+                    "to", List.of(to),
+                    "subject", subject,
+                    "text", textBody
+            );
 
-            String replyContent = "Xin chào " + request.getName() + ",\n\n"
-                    + "Cảm ơn bạn đã liên hệ với chúng tôi!\n\n"
-                    + "Chúng tôi đã nhận được yêu cầu hỗ trợ của bạn với tiêu đề:\n"
-                    + "\"" + request.getSubject() + "\"\n\n"
-                    + "Đội ngũ hỗ trợ của Nhà Trọ Thông Minh sẽ xem xét và phản hồi bạn "
-                    + "trong vòng 24 giờ làm việc qua địa chỉ email này.\n\n"
-                    + "Thông tin yêu cầu của bạn:\n"
-                    + "--------------------------------------------------\n"
-                    + "Tiêu đề: " + request.getSubject() + "\n"
-                    + "Nội dung: " + request.getMessage() + "\n"
-                    + "--------------------------------------------------\n\n"
-                    + "Nếu bạn cần hỗ trợ khẩn cấp, vui lòng liên hệ trực tiếp qua số điện thoại "
-                    + "được cung cấp trên trang web của chúng tôi.\n\n"
-                    + "Trân trọng,\n"
-                    + "Đội ngũ Nhà Trọ Thông Minh\n"
-                    + "--------------------------------------------------\n"
-                    + "Email này được gửi tự động, vui lòng không trả lời trực tiếp.\n";
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(RESEND_API_URL, entity, String.class);
 
-            replyMessage.setText(replyContent);
-            mailSender.send(replyMessage);
-            log.info("[EmailService] ✅ Đã gửi auto-reply tới {} thành công!", request.getEmail());
-
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("[EmailService] Resend API thành công: {}", response.getBody());
+                return true;
+            } else {
+                log.error("[EmailService] Resend API trả về lỗi: {} - {}", response.getStatusCode(), response.getBody());
+                return false;
+            }
         } catch (Exception e) {
-            log.error("[EmailService] ❌ Không thể gửi auto-reply tới {}: {}", request.getEmail(), e.getMessage(), e);
+            log.error("[EmailService] ❌ Lỗi gọi Resend API tới {}: {}", to, e.getMessage());
+            return false;
         }
     }
 }

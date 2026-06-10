@@ -30,9 +30,13 @@ spring:
           auth: true
           ssl:
             enable: true
-          connectiontimeout: 15000
-          timeout: 15000
-          writetimeout: 15000
+
+# Resend Email API (dùng thay SMTP vì Railway chặn port SMTP)
+app:
+  resend:
+    api-key: ${RESEND_API_KEY:}
+    from: ${RESEND_FROM:onboarding@resend.dev}
+    admin-email: tranvanhuy064206@gmail.com
 
   jpa:
     open-in-view: false
