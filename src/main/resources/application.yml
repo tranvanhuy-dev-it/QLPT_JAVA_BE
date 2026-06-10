@@ -8,9 +8,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://zephyr.proxy.rlwy.net:42378/railway?sslmode=require
-    username: postgres
-    password: YRSOJGiOGURXjtoPTZDHVstTgLtkttbJ
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -18,18 +18,6 @@ spring:
       idle-timeout: 30000
       connection-timeout: 20000
       max-lifetime: 1800000
-
-  mail:
-    host: smtp.gmail.com
-    port: 465
-    username: tranvanhuy064206@gmail.com
-    password: qabe yfvq pwul ulsu
-    properties:
-      mail:
-        smtp:
-          auth: true
-          ssl:
-            enable: true
 
   jpa:
     open-in-view: false
@@ -48,9 +36,9 @@ spring:
 # App Configurations
 app:
   jwt:
-    secret: ${JWT_SECRET:9a4f2c8d3b7a1e5c8f9d0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v}
-    expiration-ms: ${JWT_EXPIRATION_MS:5184000000} # 60 days
+    secret: ${JWT_SECRET:}
+    expiration-ms: ${JWT_EXPIRATION_MS:} # 60 days
   resend:
     api-key: ${RESEND_API_KEY:}
-    from: ${RESEND_FROM:onboarding@resend.dev}
+    from: ${RESEND_FROM:}
     admin-email: tranvanhuy064206@gmail.com
