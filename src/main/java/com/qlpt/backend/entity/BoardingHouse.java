@@ -1,7 +1,6 @@
 package com.qlpt.backend.entity;
-import com.qlpt.backend.enums.WaterBillingType;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.qlpt.backend.enums.WaterBillingType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,13 +10,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "boarding_houses", indexes = {
-    @Index(name = "idx_boarding_houses_landlord_id", columnList = "landlord_id")
+        @Index(name = "idx_boarding_houses_landlord_id", columnList = "landlord_id")
 })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class BoardingHouse {
 
     @Id
