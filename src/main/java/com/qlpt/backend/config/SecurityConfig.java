@@ -52,7 +52,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:5173",
                 "https://tvhquanlyphongtro.vercel.app",
-                "https://phongtro.tranvanhuy.io.vn",
+                "https://nhatro.tranvanhuy.io.vn",
                 "http://localhost",
                 "https://localhost",
                 "capacitor://localhost")); // Cho phép Vue local, production, và Capacitor Android/iOS
