@@ -6,6 +6,7 @@ import com.qlpt.backend.entity.*;
 import com.qlpt.backend.enums.*;
 import com.qlpt.backend.repository.*;
 import com.qlpt.backend.service.InvoiceService;
+import com.qlpt.backend.service.impl.InvoiceServiceImpl;
 import com.qlpt.backend.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ public class InvoiceServiceTest {
     private NotificationService notificationService;
 
     @InjectMocks
-    private InvoiceService invoiceService;
+    private InvoiceServiceImpl invoiceService;
 
     private User landlord;
     private User tenant;

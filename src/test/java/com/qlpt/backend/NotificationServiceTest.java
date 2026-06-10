@@ -5,6 +5,7 @@ import com.qlpt.backend.entity.Notification;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.repository.NotificationRepository;
 import com.qlpt.backend.service.NotificationService;
+import com.qlpt.backend.service.impl.NotificationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +27,7 @@ public class NotificationServiceTest {
     private NotificationRepository notificationRepository;
 
     @InjectMocks
-    private NotificationService notificationService;
+    private NotificationServiceImpl notificationService;
 
     private User user;
 
