@@ -4,6 +4,7 @@ import com.qlpt.backend.config.CustomUserDetails;
 import com.qlpt.backend.dto.auth.JwtResponse;
 import com.qlpt.backend.dto.auth.LoginRequest;
 import com.qlpt.backend.dto.auth.RegisterRequest;
+import com.qlpt.backend.dto.auth.GoogleLoginRequest;
 import com.qlpt.backend.dto.user.TenantCreateRequest;
 import com.qlpt.backend.dto.user.UserResponse;
 import com.qlpt.backend.entity.User;
@@ -36,6 +37,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request) {
         JwtResponse jwtResponse = authService.authenticateUser(request);
+        return ResponseEntity.ok(jwtResponse);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<JwtResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        JwtResponse jwtResponse = authService.authenticateGoogleUser(request);
         return ResponseEntity.ok(jwtResponse);
     }
 

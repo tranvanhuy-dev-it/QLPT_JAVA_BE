@@ -64,4 +64,7 @@ public class User {
 
     @Column(name = "subscription_expired_at")
     private java.time.LocalDate subscriptionExpiredAt;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 }
