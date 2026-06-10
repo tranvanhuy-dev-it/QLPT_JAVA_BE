@@ -52,5 +52,5 @@ app:
     expiration-ms: ${JWT_EXPIRATION_MS:5184000000} # 60 days
   resend:
     api-key: ${RESEND_API_KEY:}
-    from: ${RESEND_FROM:noreply@tranvanhuy.io.vn}
-    admin-email: 102240251@sv1.dut.udn.vn
+    from: ${RESEND_FROM:onboarding@resend.dev}
+    admin-email: tranvanhuy064206@gmail.com
