@@ -1,6 +1,6 @@
 package com.qlpt.backend.repository;
 
-import com.qlpt.backend.entity.Role;
+import com.qlpt.backend.enums.Role;
 import com.qlpt.backend.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u WHERE u.role = :role AND u.landlord.id = :landlordId " +
            "AND (:status IS NULL OR u.status = :status) " +
            "AND (:availableOnly IS NULL OR :availableOnly = false OR NOT EXISTS (" +
-           "    SELECT c FROM Contract c WHERE c.tenant.id = u.id AND c.status = com.qlpt.backend.entity.ContractStatus.ACTIVE" +
+           "    SELECT c FROM Contract c WHERE c.tenant.id = u.id AND c.status = com.qlpt.backend.enums.ContractStatus.ACTIVE" +
            "))")
     Page<User> findTenants(@Param("role") Role role,
                            @Param("landlordId") UUID landlordId,

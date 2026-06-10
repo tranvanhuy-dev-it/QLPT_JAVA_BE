@@ -1,6 +1,6 @@
 package com.qlpt.backend.service;
 
-import com.qlpt.backend.dto.ContactRequest;
+import com.qlpt.backend.dto.support.ContactRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;

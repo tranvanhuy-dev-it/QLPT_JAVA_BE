@@ -1,6 +1,6 @@
 package com.qlpt.backend.service;
 
-import com.qlpt.backend.entity.Role;
+import com.qlpt.backend.enums.Role;
 import com.qlpt.backend.entity.UpgradeRequest;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.exception.ResourceNotFoundException;

@@ -1,14 +1,14 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.InvoiceCreateRequest;
-import com.qlpt.backend.dto.InvoiceItemResponse;
-import com.qlpt.backend.dto.InvoiceResponse;
-import com.qlpt.backend.dto.BulkBillingRoomStatus;
-import com.qlpt.backend.dto.BulkInvoiceCreateRequest;
+import com.qlpt.backend.dto.invoice.InvoiceCreateRequest;
+import com.qlpt.backend.dto.invoice.InvoiceItemResponse;
+import com.qlpt.backend.dto.invoice.InvoiceResponse;
+import com.qlpt.backend.dto.invoice.BulkBillingRoomStatus;
+import com.qlpt.backend.dto.invoice.BulkInvoiceCreateRequest;
 import com.qlpt.backend.entity.Invoice;
 import com.qlpt.backend.entity.InvoiceItem;
-import com.qlpt.backend.entity.Role;
+import com.qlpt.backend.enums.Role;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.InvoiceService;
 import jakarta.validation.Valid;

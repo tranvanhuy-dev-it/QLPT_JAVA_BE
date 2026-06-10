@@ -1,7 +1,7 @@
 package com.qlpt.backend.service;
 
 import com.qlpt.backend.entity.Contract;
-import com.qlpt.backend.entity.ContractStatus;
+import com.qlpt.backend.enums.ContractStatus;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.repository.ContractRepository;
 import lombok.extern.slf4j.Slf4j;

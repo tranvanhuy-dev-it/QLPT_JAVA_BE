@@ -17,7 +17,7 @@ public interface BoardingHouseCameraRepository extends JpaRepository<BoardingHou
            "JOIN bhc.boardingHouse bh " +
            "JOIN Room r ON r.boardingHouse = bh " +
            "JOIN Contract c ON c.room = r " +
-           "WHERE c.tenant.id = :tenantId AND c.status = com.qlpt.backend.entity.ContractStatus.ACTIVE " +
+           "WHERE c.tenant.id = :tenantId AND c.status = com.qlpt.backend.enums.ContractStatus.ACTIVE " +
            "ORDER BY bhc.createdAt ASC")
     List<BoardingHouseCamera> findTenantCameras(@Param("tenantId") UUID tenantId);
 }

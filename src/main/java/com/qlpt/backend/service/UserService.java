@@ -1,7 +1,7 @@
 package com.qlpt.backend.service;
 
-import com.qlpt.backend.dto.UserResponse;
-import com.qlpt.backend.entity.Role;
+import com.qlpt.backend.dto.user.UserResponse;
+import com.qlpt.backend.enums.Role;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.exception.ResourceNotFoundException;
 import com.qlpt.backend.repository.ContractRepository;
@@ -125,7 +125,7 @@ public class UserService {
     }
 
     @Transactional
-    public User updateProfile(UUID userId, com.qlpt.backend.dto.UpdateProfileRequest request) {
+    public User updateProfile(UUID userId, com.qlpt.backend.dto.user.UpdateProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
         
@@ -137,7 +137,7 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(UUID userId, com.qlpt.backend.dto.ChangePasswordRequest request) {
+    public void changePassword(UUID userId, com.qlpt.backend.dto.auth.ChangePasswordRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
         

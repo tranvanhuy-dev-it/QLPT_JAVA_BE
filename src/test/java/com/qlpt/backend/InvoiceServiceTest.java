@@ -1,8 +1,9 @@
 package com.qlpt.backend;
 
-import com.qlpt.backend.dto.InvoiceCreateRequest;
-import com.qlpt.backend.dto.BulkBillingRoomStatus;
+import com.qlpt.backend.dto.invoice.InvoiceCreateRequest;
+import com.qlpt.backend.dto.invoice.BulkBillingRoomStatus;
 import com.qlpt.backend.entity.*;
+import com.qlpt.backend.enums.*;
 import com.qlpt.backend.repository.*;
 import com.qlpt.backend.service.InvoiceService;
 import com.qlpt.backend.service.NotificationService;

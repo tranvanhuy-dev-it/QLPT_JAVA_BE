@@ -1,7 +1,8 @@
 package com.qlpt.backend.service;
 
-import com.qlpt.backend.dto.ContractAddendumCreateRequest;
+import com.qlpt.backend.dto.contract.ContractAddendumCreateRequest;
 import com.qlpt.backend.entity.*;
+import com.qlpt.backend.enums.*;
 import com.qlpt.backend.exception.ResourceNotFoundException;
 import com.qlpt.backend.repository.*;
 import org.springframework.stereotype.Service;

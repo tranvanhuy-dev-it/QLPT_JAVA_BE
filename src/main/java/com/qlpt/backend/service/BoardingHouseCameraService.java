@@ -1,7 +1,7 @@
 package com.qlpt.backend.service;
 
-import com.qlpt.backend.dto.BoardingHouseCameraCreateRequest;
-import com.qlpt.backend.dto.BoardingHouseCameraResponse;
+import com.qlpt.backend.dto.boardinghouse.BoardingHouseCameraCreateRequest;
+import com.qlpt.backend.dto.boardinghouse.BoardingHouseCameraResponse;
 import com.qlpt.backend.entity.BoardingHouse;
 import com.qlpt.backend.entity.BoardingHouseCamera;
 import com.qlpt.backend.entity.User;

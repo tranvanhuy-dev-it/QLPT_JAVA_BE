@@ -1,7 +1,7 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.NotificationResponse;
+import com.qlpt.backend.dto.notification.NotificationResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.NotificationService;
 import org.springframework.data.domain.Page;

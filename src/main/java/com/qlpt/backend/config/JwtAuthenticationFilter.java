@@ -50,10 +50,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                       || requestURI.equals("/api/users/profile")
                                       || requestURI.equals("/api/users/change-password")
                                       || requestURI.startsWith("/api/notifications")
-                                      || user.getRole() == com.qlpt.backend.entity.Role.ADMIN;
+                                      || user.getRole() == com.qlpt.backend.enums.Role.ADMIN;
                                       
                     if (!isExcluded) {
-                        User checkUser = user.getRole() == com.qlpt.backend.entity.Role.TENANT ? user.getLandlord() : user;
+                        User checkUser = user.getRole() == com.qlpt.backend.enums.Role.TENANT ? user.getLandlord() : user;
                         if (checkUser != null) {
                             java.time.LocalDate now = java.time.LocalDate.now();
                             java.time.LocalDateTime regDate = checkUser.getCreatedAt() != null ? checkUser.getCreatedAt() : java.time.LocalDateTime.now().minusDays(50);

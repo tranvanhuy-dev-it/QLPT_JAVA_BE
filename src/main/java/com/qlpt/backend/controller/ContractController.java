@@ -1,10 +1,10 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.ContractCreateRequest;
-import com.qlpt.backend.dto.ContractResponse;
+import com.qlpt.backend.dto.contract.ContractCreateRequest;
+import com.qlpt.backend.dto.contract.ContractResponse;
 import com.qlpt.backend.entity.Contract;
-import com.qlpt.backend.entity.Role;
+import com.qlpt.backend.enums.Role;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.ContractService;
 import jakarta.validation.Valid;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-import com.qlpt.backend.dto.ContractExtraFeeResponse;
+import com.qlpt.backend.dto.contract.ContractExtraFeeResponse;
 import com.qlpt.backend.entity.ContractExtraFee;
 
 @RestController

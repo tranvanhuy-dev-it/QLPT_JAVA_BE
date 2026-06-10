@@ -1,9 +1,9 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.ContractAddendumCreateRequest;
-import com.qlpt.backend.dto.ContractAddendumExtraFeeResponse;
-import com.qlpt.backend.dto.ContractAddendumResponse;
+import com.qlpt.backend.dto.contract.ContractAddendumCreateRequest;
+import com.qlpt.backend.dto.contract.ContractAddendumExtraFeeResponse;
+import com.qlpt.backend.dto.contract.ContractAddendumResponse;
 import com.qlpt.backend.entity.ContractAddendum;
 import com.qlpt.backend.entity.ContractAddendumExtraFee;
 import com.qlpt.backend.entity.User;

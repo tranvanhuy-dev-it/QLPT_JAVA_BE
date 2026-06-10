@@ -1,9 +1,10 @@
 package com.qlpt.backend.service;
 
-import com.qlpt.backend.dto.InvoiceCreateRequest;
-import com.qlpt.backend.dto.BulkBillingRoomStatus;
-import com.qlpt.backend.dto.BulkInvoiceCreateRequest;
+import com.qlpt.backend.dto.invoice.InvoiceCreateRequest;
+import com.qlpt.backend.dto.invoice.BulkBillingRoomStatus;
+import com.qlpt.backend.dto.invoice.BulkInvoiceCreateRequest;
 import com.qlpt.backend.entity.*;
+import com.qlpt.backend.enums.*;
 import com.qlpt.backend.exception.ResourceNotFoundException;
 import com.qlpt.backend.repository.*;
 import org.springframework.data.domain.Page;

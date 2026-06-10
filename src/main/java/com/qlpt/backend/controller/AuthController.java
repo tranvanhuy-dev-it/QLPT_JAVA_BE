@@ -1,11 +1,11 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.JwtResponse;
-import com.qlpt.backend.dto.LoginRequest;
-import com.qlpt.backend.dto.RegisterRequest;
-import com.qlpt.backend.dto.TenantCreateRequest;
-import com.qlpt.backend.dto.UserResponse;
+import com.qlpt.backend.dto.auth.JwtResponse;
+import com.qlpt.backend.dto.auth.LoginRequest;
+import com.qlpt.backend.dto.auth.RegisterRequest;
+import com.qlpt.backend.dto.user.TenantCreateRequest;
+import com.qlpt.backend.dto.user.UserResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -26,7 +26,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
-        if (request.getRole() == com.qlpt.backend.entity.Role.TENANT) {
+        if (request.getRole() == com.qlpt.backend.enums.Role.TENANT) {
             throw new RuntimeException("Người thuê phải do chủ trọ cấp tài khoản, không thể tự đăng ký");
         }
         User user = authService.registerUser(request);

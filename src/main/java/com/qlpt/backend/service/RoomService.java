@@ -3,7 +3,7 @@ package com.qlpt.backend.service;
 import com.qlpt.backend.entity.BoardingHouse;
 import com.qlpt.backend.entity.ExtraFee;
 import com.qlpt.backend.entity.Room;
-import com.qlpt.backend.entity.RoomStatus;
+import com.qlpt.backend.enums.RoomStatus;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.exception.ResourceNotFoundException;
 import com.qlpt.backend.repository.BoardingHouseRepository;

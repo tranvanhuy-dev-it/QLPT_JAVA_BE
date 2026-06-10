@@ -1,4 +1,5 @@
 package com.qlpt.backend.entity;
+import com.qlpt.backend.enums.RoomStatus;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;

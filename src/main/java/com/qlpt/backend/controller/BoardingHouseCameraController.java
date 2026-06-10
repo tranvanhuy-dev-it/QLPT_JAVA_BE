@@ -1,8 +1,8 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.BoardingHouseCameraCreateRequest;
-import com.qlpt.backend.dto.BoardingHouseCameraResponse;
+import com.qlpt.backend.dto.boardinghouse.BoardingHouseCameraCreateRequest;
+import com.qlpt.backend.dto.boardinghouse.BoardingHouseCameraResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.BoardingHouseCameraService;
 import jakarta.validation.Valid;

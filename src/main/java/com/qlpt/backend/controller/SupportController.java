@@ -1,6 +1,6 @@
 package com.qlpt.backend.controller;
 
-import com.qlpt.backend.dto.ContactRequest;
+import com.qlpt.backend.dto.support.ContactRequest;
 import com.qlpt.backend.service.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

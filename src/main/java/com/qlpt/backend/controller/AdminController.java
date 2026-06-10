@@ -1,7 +1,7 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.UserResponse;
+import com.qlpt.backend.dto.user.UserResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.UserService;
 import com.qlpt.backend.repository.UserRepository;
@@ -59,13 +59,13 @@ public class AdminController {
 
     @GetMapping("/statistics")
     public ResponseEntity<Map<String, Object>> getStatistics() {
-        long totalLandlords = userRepository.countByRole(com.qlpt.backend.entity.Role.LANDLORD);
-        long totalTenants = userRepository.countByRole(com.qlpt.backend.entity.Role.TENANT);
+        long totalLandlords = userRepository.countByRole(com.qlpt.backend.enums.Role.LANDLORD);
+        long totalTenants = userRepository.countByRole(com.qlpt.backend.enums.Role.TENANT);
         long totalUsers = userRepository.count();
         
         long totalBoardingHouses = boardingHouseRepository.count();
         long totalRooms = roomRepository.count();
-        long occupiedRooms = roomRepository.countByStatus(com.qlpt.backend.entity.RoomStatus.OCCUPIED);
+        long occupiedRooms = roomRepository.countByStatus(com.qlpt.backend.enums.RoomStatus.OCCUPIED);
         
         double occupancyRate = 0.0;
         if (totalRooms > 0) {

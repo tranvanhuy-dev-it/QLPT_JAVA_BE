@@ -1,7 +1,7 @@
 package com.qlpt.backend.repository;
 
 import com.qlpt.backend.entity.Contract;
-import com.qlpt.backend.entity.ContractStatus;
+import com.qlpt.backend.enums.ContractStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,7 +29,7 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
     @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord", "addendums"})
     Page<Contract> findByRoomId(UUID roomId, Pageable pageable);
 
-    @Query("SELECT c.tenant.id FROM Contract c WHERE c.status = com.qlpt.backend.entity.ContractStatus.ACTIVE AND c.tenant.id IN :tenantIds")
+    @Query("SELECT c.tenant.id FROM Contract c WHERE c.status = com.qlpt.backend.enums.ContractStatus.ACTIVE AND c.tenant.id IN :tenantIds")
     java.util.List<UUID> findTenantIdsWithActiveContracts(@Param("tenantIds") java.util.List<UUID> tenantIds);
 
     @EntityGraph(attributePaths = {"room", "tenant", "room.boardingHouse", "room.boardingHouse.landlord"})

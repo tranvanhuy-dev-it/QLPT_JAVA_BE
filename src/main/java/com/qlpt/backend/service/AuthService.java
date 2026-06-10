@@ -2,11 +2,11 @@ package com.qlpt.backend.service;
 
 import com.qlpt.backend.config.CustomUserDetails;
 import com.qlpt.backend.config.JwtTokenProvider;
-import com.qlpt.backend.dto.JwtResponse;
-import com.qlpt.backend.dto.LoginRequest;
-import com.qlpt.backend.dto.RegisterRequest;
-import com.qlpt.backend.dto.TenantCreateRequest;
-import com.qlpt.backend.entity.Role;
+import com.qlpt.backend.dto.auth.JwtResponse;
+import com.qlpt.backend.dto.auth.LoginRequest;
+import com.qlpt.backend.dto.auth.RegisterRequest;
+import com.qlpt.backend.dto.user.TenantCreateRequest;
+import com.qlpt.backend.enums.Role;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;

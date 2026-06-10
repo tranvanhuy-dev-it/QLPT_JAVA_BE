@@ -1,6 +1,6 @@
 package com.qlpt.backend;
 
-import com.qlpt.backend.dto.NotificationResponse;
+import com.qlpt.backend.dto.notification.NotificationResponse;
 import com.qlpt.backend.entity.Notification;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.repository.NotificationRepository;

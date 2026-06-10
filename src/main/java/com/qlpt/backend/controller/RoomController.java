@@ -1,9 +1,9 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.BoardingHouseResponse;
-import com.qlpt.backend.dto.ExtraFeeResponse;
-import com.qlpt.backend.dto.RoomResponse;
+import com.qlpt.backend.dto.boardinghouse.BoardingHouseResponse;
+import com.qlpt.backend.dto.extrafee.ExtraFeeResponse;
+import com.qlpt.backend.dto.room.RoomResponse;
 import com.qlpt.backend.entity.BoardingHouse;
 import com.qlpt.backend.entity.ExtraFee;
 import com.qlpt.backend.entity.Room;

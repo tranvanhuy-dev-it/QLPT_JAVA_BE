@@ -1,4 +1,5 @@
 package com.qlpt.backend.entity;
+import com.qlpt.backend.enums.Role;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface RoomRepository extends JpaRepository<Room, UUID> {
     @EntityGraph(attributePaths = {"boardingHouse", "boardingHouse.landlord"})
     Optional<Room> findWithDetailsById(UUID id);
-    long countByStatus(com.qlpt.backend.entity.RoomStatus status);
+    long countByStatus(com.qlpt.backend.enums.RoomStatus status);
 
     @EntityGraph(attributePaths = {"boardingHouse", "boardingHouse.landlord"})
     Page<Room> findByBoardingHouseId(UUID boardingHouseId, Pageable pageable);

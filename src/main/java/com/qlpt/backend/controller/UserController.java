@@ -1,7 +1,7 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.UserResponse;
+import com.qlpt.backend.dto.user.UserResponse;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.UserService;
 import org.springframework.data.domain.Page;
@@ -64,7 +64,7 @@ public class UserController {
 
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
-            @jakarta.validation.Valid @RequestBody com.qlpt.backend.dto.UpdateProfileRequest request,
+            @jakarta.validation.Valid @RequestBody com.qlpt.backend.dto.user.UpdateProfileRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
         User updated = userService.updateProfile(user.getId(), request);
@@ -73,7 +73,7 @@ public class UserController {
 
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(
-            @jakarta.validation.Valid @RequestBody com.qlpt.backend.dto.ChangePasswordRequest request,
+            @jakarta.validation.Valid @RequestBody com.qlpt.backend.dto.auth.ChangePasswordRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
         userService.changePassword(user.getId(), request);

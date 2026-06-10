@@ -1,8 +1,8 @@
 package com.qlpt.backend.controller;
 
 import com.qlpt.backend.config.CustomUserDetails;
-import com.qlpt.backend.dto.UpgradeRequestResponse;
-import com.qlpt.backend.dto.UserResponse;
+import com.qlpt.backend.dto.subscription.UpgradeRequestResponse;
+import com.qlpt.backend.dto.user.UserResponse;
 import com.qlpt.backend.entity.UpgradeRequest;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.service.SubscriptionService;
