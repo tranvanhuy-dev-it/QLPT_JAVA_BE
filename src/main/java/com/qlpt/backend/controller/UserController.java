@@ -19,9 +19,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final com.qlpt.backend.repository.UserSessionRepository userSessionRepository;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, com.qlpt.backend.repository.UserSessionRepository userSessionRepository) {
         this.userService = userService;
+        this.userSessionRepository = userSessionRepository;
     }
 
     @GetMapping("/profile")
@@ -97,5 +99,40 @@ public class UserController {
         User user = userDetails.getUser();
         User updated = userService.updateImouSettings(user.getId(), request);
         return ResponseEntity.ok(UserResponse.fromEntity(updated));
+    }
+
+    @GetMapping("/login-history")
+    public ResponseEntity<java.util.List<com.qlpt.backend.dto.user.UserSessionResponse>> getLoginHistory(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            jakarta.servlet.http.HttpServletRequest request) {
+        User user = userDetails.getUser();
+        String bearerToken = request.getHeader("Authorization");
+        String currentToken = null;
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            currentToken = bearerToken.substring(7);
+        }
+        final String finalToken = currentToken;
+        java.util.List<com.qlpt.backend.entity.UserSession> sessions = userSessionRepository.findByUserOrderByLoginTimeDesc(user);
+        java.util.List<com.qlpt.backend.dto.user.UserSessionResponse> response = sessions.stream()
+                .map(s -> com.qlpt.backend.dto.user.UserSessionResponse.fromEntity(s, finalToken))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/login-history/{id}")
+    public ResponseEntity<Void> revokeSession(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        com.qlpt.backend.entity.UserSession session = userSessionRepository.findById(id)
+                .orElseThrow(() -> new com.qlpt.backend.exception.ResourceNotFoundException("Không tìm thấy phiên làm việc"));
+                
+        if (!session.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).build(); // Forbidden
+        }
+        
+        session.setActive(false);
+        userSessionRepository.save(session);
+        return ResponseEntity.ok().build();
     }
 }

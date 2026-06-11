@@ -39,15 +39,48 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final com.qlpt.backend.repository.UserSessionRepository userSessionRepository;
 
     public AuthServiceImpl(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
-                       JwtTokenProvider tokenProvider) {
+                       JwtTokenProvider tokenProvider,
+                       com.qlpt.backend.repository.UserSessionRepository userSessionRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
+        this.userSessionRepository = userSessionRepository;
+    }
+
+    private void createSession(User user, String token) {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attributes = 
+                (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            String ipAddress = "unknown";
+            String userAgent = "unknown";
+            if (attributes != null) {
+                jakarta.servlet.http.HttpServletRequest request = attributes.getRequest();
+                ipAddress = request.getRemoteAddr();
+                String xForwardedFor = request.getHeader("X-Forwarded-For");
+                if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+                    ipAddress = xForwardedFor.split(",")[0].trim();
+                }
+                userAgent = request.getHeader("User-Agent");
+            }
+            com.qlpt.backend.entity.UserSession session = com.qlpt.backend.entity.UserSession.builder()
+                    .user(user)
+                    .token(token)
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .loginTime(java.time.LocalDateTime.now())
+                    .lastActivityTime(java.time.LocalDateTime.now())
+                    .active(true)
+                    .build();
+            userSessionRepository.save(session);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lưu phiên đăng nhập: " + e.getMessage());
+        }
     }
 
     @PostConstruct
@@ -102,6 +135,8 @@ public class AuthServiceImpl implements AuthService {
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
+
+            createSession(user, jwt);
 
             boolean isExpired = false;
             if (user.getRole() == Role.LANDLORD) {
@@ -216,6 +251,8 @@ public class AuthServiceImpl implements AuthService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             String jwt = tokenProvider.generateToken(authentication);
+
+            createSession(user, jwt);
 
             boolean isExpired = false;
             if (user.getRole() == Role.LANDLORD) {

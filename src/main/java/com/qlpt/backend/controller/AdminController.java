@@ -28,15 +28,18 @@ public class AdminController {
     private final UserRepository userRepository;
     private final BoardingHouseRepository boardingHouseRepository;
     private final RoomRepository roomRepository;
+    private final com.qlpt.backend.repository.UserSessionRepository userSessionRepository;
 
     public AdminController(UserService userService,
                            UserRepository userRepository,
                            BoardingHouseRepository boardingHouseRepository,
-                           RoomRepository roomRepository) {
+                           RoomRepository roomRepository,
+                           com.qlpt.backend.repository.UserSessionRepository userSessionRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.boardingHouseRepository = boardingHouseRepository;
         this.roomRepository = roomRepository;
+        this.userSessionRepository = userSessionRepository;
     }
 
     @GetMapping("/landlords")
@@ -82,5 +85,16 @@ public class AdminController {
         stats.put("occupancyRate", Math.round(occupancyRate * 100.0) / 100.0);
         
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/login-history")
+    public ResponseEntity<org.springframework.data.domain.Page<com.qlpt.backend.dto.user.AdminUserSessionResponse>> getSystemLoginHistory(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) com.qlpt.backend.enums.Role role,
+            @RequestParam(required = false) Boolean active,
+            @org.springframework.data.web.PageableDefault(size = 15, sort = "loginTime", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<com.qlpt.backend.entity.UserSession> sessions = 
+                userSessionRepository.findSessions(query, role, active, pageable);
+        return ResponseEntity.ok(sessions.map(com.qlpt.backend.dto.user.AdminUserSessionResponse::fromEntity));
     }
 }
