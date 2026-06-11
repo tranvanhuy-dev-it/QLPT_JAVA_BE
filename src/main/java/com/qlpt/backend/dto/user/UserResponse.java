@@ -18,7 +18,9 @@ public record UserResponse(
     String idCardIssuePlace,
     String permanentAddress,
     java.time.LocalDateTime createdAt,
-    java.time.LocalDate subscriptionExpiredAt
+    java.time.LocalDate subscriptionExpiredAt,
+    String imouAppId,
+    String imouAppSecret
 ) {
     public static UserResponse fromEntity(User user) {
         return fromEntity(user, null);
@@ -45,7 +47,9 @@ public record UserResponse(
             user.getIdCardIssuePlace(),
             user.getPermanentAddress(),
             user.getCreatedAt(),
-            user.getSubscriptionExpiredAt()
+            user.getSubscriptionExpiredAt(),
+            user.getImouAppId(),
+            user.getImouAppSecret() != null ? "********" : null
         );
     }
 }

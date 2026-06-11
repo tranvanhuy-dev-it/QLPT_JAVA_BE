@@ -88,4 +88,14 @@ public class UserController {
         User updated = userService.resetPassword(id, actor);
         return ResponseEntity.ok(UserResponse.fromEntity(updated));
     }
+
+    @PutMapping("/imou-settings")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<UserResponse> updateImouSettings(
+            @RequestBody com.qlpt.backend.dto.user.ImouSettingsRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        User updated = userService.updateImouSettings(user.getId(), request);
+        return ResponseEntity.ok(UserResponse.fromEntity(updated));
+    }
 }

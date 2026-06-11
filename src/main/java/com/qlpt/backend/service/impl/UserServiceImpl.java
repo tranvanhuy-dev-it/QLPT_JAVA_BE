@@ -192,4 +192,27 @@ public class UserServiceImpl implements UserService {
         targetUser.setPassword(passwordEncoder.encode(rawPassword));
         return userRepository.save(targetUser);
     }
+
+    @Transactional
+    @Override
+    public User updateImouSettings(UUID userId, com.qlpt.backend.dto.user.ImouSettingsRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.qlpt.backend.exception.ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
+
+        if (request.imouAppId() == null || request.imouAppId().trim().isEmpty()) {
+            user.setImouAppId(null);
+            user.setImouAppSecret(null);
+        } else {
+            user.setImouAppId(request.imouAppId().trim());
+            
+            String newSecret = request.imouAppSecret();
+            if (newSecret != null && !newSecret.trim().isEmpty() && !newSecret.equals("********")) {
+                user.setImouAppSecret(newSecret.trim());
+            } else if (newSecret == null || newSecret.trim().isEmpty()) {
+                user.setImouAppSecret(null);
+            }
+        }
+
+        return userRepository.save(user);
+    }
 }

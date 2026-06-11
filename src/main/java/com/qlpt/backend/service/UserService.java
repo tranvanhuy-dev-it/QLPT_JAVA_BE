@@ -27,4 +27,6 @@ public interface UserService {
     public void changePassword(UUID userId, com.qlpt.backend.dto.auth.ChangePasswordRequest request);
 
     public User resetPassword(UUID targetUserId, User actor);
+
+    public User updateImouSettings(UUID userId, com.qlpt.backend.dto.user.ImouSettingsRequest request);
 }

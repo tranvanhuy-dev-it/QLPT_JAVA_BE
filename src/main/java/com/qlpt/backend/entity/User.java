@@ -67,4 +67,10 @@ public class User {
 
     @Column(name = "google_id", unique = true)
     private String googleId;
+
+    @Column(name = "imou_app_id")
+    private String imouAppId;
+
+    @Column(name = "imou_app_secret")
+    private String imouAppSecret;
 }

@@ -45,14 +45,21 @@ public class ImouCloudService {
     // MAIN API
     // =========================
     public void bindDevice(String serialNumber, String safetyCode) {
-        if (isBlank(appId) || isBlank(appSecret)) {
+        bindDevice(serialNumber, safetyCode, null, null);
+    }
+
+    public void bindDevice(String serialNumber, String safetyCode, String customAppId, String customAppSecret) {
+        String activeAppId = isBlank(customAppId) ? appId : customAppId;
+        String activeAppSecret = isBlank(customAppSecret) ? appSecret : customAppSecret;
+
+        if (isBlank(activeAppId) || isBlank(activeAppSecret)) {
             log.warn("IMOU chưa cấu hình AppID/Secret. Đang chạy ở CHẾ ĐỘ MÔ PHỎNG. Bỏ qua bindDevice.");
             return;
         }
 
         try {
             log.info("Đang lấy Access Token từ Imou Cloud để liên kết thiết bị...");
-            String accessToken = getAccessToken();
+            String accessToken = getAccessToken(activeAppId, activeAppSecret);
             if (accessToken == null) {
                 throw new RuntimeException("Không lấy được accessToken để liên kết thiết bị");
             }
@@ -63,14 +70,14 @@ public class ImouCloudService {
             params.put("deviceId", serialNumber);
             params.put("code", safetyCode);
 
-            JsonNode res = sendPostRequest("/bindDevice", params);
+            JsonNode res = sendPostRequest("/bindDevice", params, activeAppId, activeAppSecret);
             if (res != null && res.has("result")) {
                 JsonNode resultNode = res.get("result");
                 String code = resultNode.get("code").asText();
                 if ("0".equals(code)) {
                     log.info("Liên kết thiết bị {} thành công.", serialNumber);
-                } else if ("DV1015".equals(code)) {
-                    log.info("Thiết bị {} đã được liên kết với tài khoản này từ trước.", serialNumber);
+                } else if ("DV1015".equals(code) || "DV1001".equals(code)) {
+                    log.info("Thiết bị {} đã được liên kết từ trước (Mã kết quả: {}). Bỏ qua bước liên kết.", serialNumber, code);
                 } else {
                     String msg = resultNode.get("msg").asText();
                     log.error("Liên kết thiết bị {} thất bại: {} - {}", serialNumber, code, msg);
@@ -86,18 +93,25 @@ public class ImouCloudService {
     }
 
     public String getLiveStreamUrl(String serialNumber, String safetyCode) {
-        if (isBlank(appId) || isBlank(appSecret)) {
+        return getLiveStreamUrl(serialNumber, safetyCode, null, null);
+    }
+
+    public String getLiveStreamUrl(String serialNumber, String safetyCode, String customAppId, String customAppSecret) {
+        String activeAppId = isBlank(customAppId) ? appId : customAppId;
+        String activeAppSecret = isBlank(customAppSecret) ? appSecret : customAppSecret;
+
+        if (isBlank(activeAppId) || isBlank(activeAppSecret)) {
             log.warn("IMOU chưa cấu hình → fallback test stream");
             return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
         }
 
         try {
-            String accessToken = getAccessToken();
+            String accessToken = getAccessToken(activeAppId, activeAppSecret);
             if (accessToken == null) {
                 throw new RuntimeException("Không lấy được accessToken");
             }
 
-            String url = fetchLiveStreamUrl(accessToken, serialNumber);
+            String url = fetchLiveStreamUrl(accessToken, serialNumber, activeAppId, activeAppSecret);
             return sanitizeUrl(url);
         } catch (Exception e) {
             log.error("IMOU ERROR khi lấy live stream URL cho {}: ", serialNumber, e);
@@ -108,11 +122,9 @@ public class ImouCloudService {
     // =========================
     // ACCESS TOKEN
     // =========================
-    private String getAccessToken() throws Exception {
-
+    private String getAccessToken(String customAppId, String customAppSecret) throws Exception {
         Map<String, Object> params = new HashMap<>();
-
-        JsonNode response = sendPostRequest("/accessToken", params);
+        JsonNode response = sendPostRequest("/accessToken", params, customAppId, customAppSecret);
 
         if (isSuccess(response)) {
             return response.get("result")
@@ -126,41 +138,18 @@ public class ImouCloudService {
     }
 
     // =========================
-    // BIND DEVICE (FIX LOGIC)
-    // =========================
-    private void bindDevice(String token, String deviceId, String code) {
-        try {
-            Map<String, Object> params = new HashMap<>();
-            params.put("token", token);
-            params.put("deviceId", deviceId);
-            params.put("code", code);
-
-            JsonNode res = sendPostRequest("/bindDevice", params);
-
-            if (!isSuccess(res)) {
-                log.warn("BindDevice warning: {}", res);
-            }
-
-        } catch (Exception e) {
-            log.warn("BindDevice error (ignored): ", e);
-        }
-    }
-
-    // =========================
     // GET STREAM
     // =========================
-    private String fetchLiveStreamUrl(String token, String deviceId) throws Exception {
-
+    private String fetchLiveStreamUrl(String token, String deviceId, String customAppId, String customAppSecret) throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("token", token);
         params.put("deviceId", deviceId);
         params.put("channelId", "0");
         params.put("liveType", "1");
 
-        JsonNode res = sendPostRequest("/getLiveStreamInfo", params);
+        JsonNode res = sendPostRequest("/getLiveStreamInfo", params, customAppId, customAppSecret);
 
         if (isSuccess(res)) {
-
             JsonNode data = res.get("result").get("data");
 
             // case 1: streams[]
@@ -184,9 +173,12 @@ public class ImouCloudService {
     // =========================
     // HTTP REQUEST
     // =========================
-    private JsonNode sendPostRequest(String endpoint, Map<String, Object> params) throws Exception {
-        String cleanAppId = appId != null ? appId.trim() : "";
-        String cleanAppSecret = appSecret != null ? appSecret.trim() : "";
+    private JsonNode sendPostRequest(String endpoint, Map<String, Object> params, String customAppId, String customAppSecret) throws Exception {
+        String activeAppId = isBlank(customAppId) ? appId : customAppId;
+        String activeAppSecret = isBlank(customAppSecret) ? appSecret : customAppSecret;
+
+        String cleanAppId = activeAppId != null ? activeAppId.trim() : "";
+        String cleanAppSecret = activeAppSecret != null ? activeAppSecret.trim() : "";
 
         long time = System.currentTimeMillis() / 1000;
         String nonce = UUID.randomUUID().toString().replace("-", "");
