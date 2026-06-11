@@ -185,17 +185,22 @@ public class ImouCloudService {
     // HTTP REQUEST
     // =========================
     private JsonNode sendPostRequest(String endpoint, Map<String, Object> params) throws Exception {
+        String cleanAppId = appId != null ? appId.trim() : "";
+        String cleanAppSecret = appSecret != null ? appSecret.trim() : "";
 
         long time = System.currentTimeMillis() / 1000;
         String nonce = UUID.randomUUID().toString().replace("-", "");
 
-        // 🔥 FIX SIGN (chuẩn Imou Cloud API v1.1: time,nonce,appSecret)
-        String signRaw = time + "," + nonce + "," + appSecret;
+        // 🔥 FIX SIGN (chuẩn Imou Cloud API v1.1: time:{time},nonce:{nonce},appSecret:{appSecret})
+        String signRaw = "time:" + time + ",nonce:" + nonce + ",appSecret:" + cleanAppSecret;
         String sign = md5(signRaw);
+
+        log.info("Imou Request /{} -> appId length: {}, appSecret length: {}, time: {}, nonce: {}, sign: {}", 
+                 endpoint, cleanAppId.length(), cleanAppSecret.length(), time, nonce, sign);
 
         Map<String, Object> system = new HashMap<>();
         system.put("ver", "1.1");
-        system.put("appId", appId);
+        system.put("appId", cleanAppId);
         system.put("sign", sign);
         system.put("time", time);
         system.put("nonce", nonce);
