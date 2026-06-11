@@ -6,9 +6,11 @@ public record BoardingHouseCameraCreateRequest(
     @NotBlank(message = "Tên camera không được để trống")
     String name,
 
-    @NotBlank(message = "Đường dẫn luồng (stream URL) không được để trống")
     String streamUrl,
 
     String username,
-    String password
+    String password,
+    String brand,
+    String serialNumber,
+    String safetyCode
 ) {}

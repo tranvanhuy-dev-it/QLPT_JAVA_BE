@@ -11,6 +11,9 @@ public record BoardingHouseCameraResponse(
     String streamUrl,
     String username,
     String password,
+    String brand,
+    String serialNumber,
+    String safetyCode,
     LocalDateTime createdAt
 ) {
     public static BoardingHouseCameraResponse fromEntity(BoardingHouseCamera camera) {
@@ -22,6 +25,9 @@ public record BoardingHouseCameraResponse(
             camera.getStreamUrl(),
             camera.getUsername(),
             camera.getPassword(),
+            camera.getBrand(),
+            camera.getSerialNumber(),
+            camera.getSafetyCode(),
             camera.getCreatedAt()
         );
     }

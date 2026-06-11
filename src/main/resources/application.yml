@@ -44,4 +44,8 @@ app:
     admin-email: tranvanhuy064206@gmail.com
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
+  imou:
+    app-id: ${IMOU_APP_ID:}
+    app-secret: ${IMOU_APP_SECRET:}
+
 

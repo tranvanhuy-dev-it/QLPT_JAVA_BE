@@ -39,6 +39,15 @@ public class BoardingHouseCamera {
     @Column(name = "password")
     private String password;
 
+    @Column(name = "brand")
+    private String brand;
+
+    @Column(name = "serial_number")
+    private String serialNumber;
+
+    @Column(name = "safety_code")
+    private String safetyCode;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

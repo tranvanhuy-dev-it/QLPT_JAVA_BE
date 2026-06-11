@@ -22,5 +22,5 @@ public class RegisterRequest {
     private String idCardIssuePlace;
 
     @NotNull(message = "Vai trò không được trống")
-    private Role role; // ADMIN, LANDLORD (Tenant is created by Landlord)
+    private Role role;
 }

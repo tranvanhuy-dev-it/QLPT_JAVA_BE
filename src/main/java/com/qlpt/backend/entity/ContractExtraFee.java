@@ -1,6 +1,5 @@
 package com.qlpt.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,13 +7,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "contract_extra_fees", indexes = {
-    @Index(name = "idx_cef_contract_id", columnList = "contract_id")
+        @Index(name = "idx_cef_contract_id", columnList = "contract_id")
 })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ContractExtraFee {
 
     @Id

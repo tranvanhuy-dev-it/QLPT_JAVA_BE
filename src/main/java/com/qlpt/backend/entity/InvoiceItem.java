@@ -1,6 +1,5 @@
 package com.qlpt.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,13 +7,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "invoice_items", indexes = {
-    @Index(name = "idx_invoice_items_invoice_id", columnList = "invoice_id")
+        @Index(name = "idx_invoice_items_invoice_id", columnList = "invoice_id")
 })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class InvoiceItem {
 
     @Id
@@ -26,14 +25,14 @@ public class InvoiceItem {
     private Invoice invoice;
 
     @Column(nullable = false)
-    private String name; // e.g. "Phụ phí Wifi", "Phí rác"
+    private String name;
 
     @Column(nullable = false)
-    private double price; // Đơn giá tại thời điểm xuất hóa đơn
+    private double price;
 
     @Column(nullable = false)
-    private double quantity; // Số lượng (ví dụ số người ở hoặc 1 phòng)
+    private double quantity;
 
     @Column(nullable = false)
-    private double subtotal; // Thành tiền (price * quantity)
+    private double subtotal;
 }
