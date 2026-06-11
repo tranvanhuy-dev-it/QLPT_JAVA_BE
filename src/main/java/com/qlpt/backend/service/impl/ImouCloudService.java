@@ -30,7 +30,7 @@ public class ImouCloudService {
     @Value("${app.imou.app-secret:}")
     private String appSecret;
 
-    @Value("${app.imou.api-url:https://openapi-sg.imoulife.com/openapi}")
+    @Value("${app.imou.api-url:https://openapi-sg.easy4ip.com/openapi}")
     private String apiUrl;
 
     public ImouCloudService() {
@@ -47,7 +47,7 @@ public class ImouCloudService {
     public String getLiveStreamUrl(String serialNumber, String safetyCode) {
         if (appId == null || appId.trim().isEmpty() || appSecret == null || appSecret.trim().isEmpty()) {
             log.warn("Imou AppID hoặc AppSecret chưa được cấu hình. Đang chạy ở CHẾ ĐỘ MÔ PHỎNG.");
-            return String.format("https://openapi-sg.imoulife.com/live/HLS/%s_0.m3u8?token=simulated_token", serialNumber);
+            return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
         }
 
         try {
@@ -64,7 +64,7 @@ public class ImouCloudService {
             return fetchLiveStreamUrl(accessToken, serialNumber);
         } catch (Exception e) {
             log.error("Lỗi khi kết nối với Imou Cloud API, tự động fallback về link mô phỏng: ", e);
-            return String.format("https://openapi-sg.imoulife.com/live/HLS/%s_0.m3u8?token=simulated_fallback_token", serialNumber);
+            return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
         }
     }
 
