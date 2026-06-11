@@ -44,8 +44,48 @@ public class ImouCloudService {
     // =========================
     // MAIN API
     // =========================
-    public String getLiveStreamUrl(String serialNumber, String safetyCode) {
+    public void bindDevice(String serialNumber, String safetyCode) {
+        if (isBlank(appId) || isBlank(appSecret)) {
+            log.warn("IMOU chưa cấu hình AppID/Secret. Đang chạy ở CHẾ ĐỘ MÔ PHỎNG. Bỏ qua bindDevice.");
+            return;
+        }
 
+        try {
+            log.info("Đang lấy Access Token từ Imou Cloud để liên kết thiết bị...");
+            String accessToken = getAccessToken();
+            if (accessToken == null) {
+                throw new RuntimeException("Không lấy được accessToken để liên kết thiết bị");
+            }
+            
+            log.info("Đang gửi yêu cầu liên kết thiết bị {} với Imou Cloud...", serialNumber);
+            Map<String, Object> params = new HashMap<>();
+            params.put("token", accessToken);
+            params.put("deviceId", serialNumber);
+            params.put("deviceVerifyCode", safetyCode);
+
+            JsonNode res = sendPostRequest("/bindDevice", params);
+            if (res != null && res.has("result")) {
+                JsonNode resultNode = res.get("result");
+                String code = resultNode.get("code").asText();
+                if ("0".equals(code)) {
+                    log.info("Liên kết thiết bị {} thành công.", serialNumber);
+                } else if ("DV1015".equals(code)) {
+                    log.info("Thiết bị {} đã được liên kết với tài khoản này từ trước.", serialNumber);
+                } else {
+                    String msg = resultNode.get("msg").asText();
+                    log.error("Liên kết thiết bị {} thất bại: {} - {}", serialNumber, code, msg);
+                    throw new RuntimeException("Imou Cloud: " + msg + " (" + code + ")");
+                }
+            } else {
+                throw new RuntimeException("Không nhận được phản hồi từ Imou API");
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi gọi API bindDevice cho thiết bị {}: ", serialNumber, e);
+            throw new RuntimeException("Lỗi liên kết thiết bị Imou: " + e.getMessage(), e);
+        }
+    }
+
+    public String getLiveStreamUrl(String serialNumber, String safetyCode) {
         if (isBlank(appId) || isBlank(appSecret)) {
             log.warn("IMOU chưa cấu hình → fallback test stream");
             return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
@@ -57,17 +97,11 @@ public class ImouCloudService {
                 throw new RuntimeException("Không lấy được accessToken");
             }
 
-            // ⚠️ FIX: chỉ bind 1 lần, không gọi mỗi request
-            bindDevice(accessToken, serialNumber, safetyCode);
-
             String url = fetchLiveStreamUrl(accessToken, serialNumber);
-
-            // 🔥 FIX QUAN TRỌNG: validate URL
             return sanitizeUrl(url);
-
         } catch (Exception e) {
-            log.error("IMOU ERROR → fallback stream", e);
-            return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+            log.error("IMOU ERROR khi lấy live stream URL cho {}: ", serialNumber, e);
+            throw new RuntimeException("Lỗi lấy luồng Imou: " + e.getMessage(), e);
         }
     }
 
@@ -155,8 +189,8 @@ public class ImouCloudService {
         long time = System.currentTimeMillis() / 1000;
         String nonce = UUID.randomUUID().toString().replace("-", "");
 
-        // 🔥 FIX SIGN (chuẩn phổ biến IMOU)
-        String signRaw = appId + time + nonce + appSecret;
+        // 🔥 FIX SIGN (chuẩn Imou Cloud API v1.1: time,nonce,appSecret)
+        String signRaw = time + "," + nonce + "," + appSecret;
         String sign = md5(signRaw);
 
         Map<String, Object> system = new HashMap<>();
@@ -205,7 +239,23 @@ public class ImouCloudService {
         if (url == null)
             return null;
 
-        // FIX lỗi admin:pass@ gây ERR_NAME_NOT_RESOLVED
+        // 1. Ghi đè host chưa phân giải sang host của API gateway hoạt động thực tế
+        try {
+            URI hlsUri = URI.create(url);
+            URI apiUri = URI.create(apiUrl);
+            String apiHost = apiUri.getHost();
+            if (apiHost != null && !apiHost.isEmpty()) {
+                String originalHost = hlsUri.getHost();
+                if (originalHost != null && !originalHost.equals(apiHost)) {
+                    url = url.replace(originalHost, apiHost);
+                    log.info("Ghi đè host stream HLS từ {} thành {}", originalHost, apiHost);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Không thể chuyển đổi host cho stream URL: {}", url, e);
+        }
+
+        // 2. FIX lỗi admin:pass@ gây ERR_NAME_NOT_RESOLVED
         return url.replaceAll("https://.*@", "https://");
     }
 

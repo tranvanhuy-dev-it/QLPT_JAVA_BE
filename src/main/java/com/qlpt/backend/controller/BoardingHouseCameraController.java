@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -83,5 +84,14 @@ public class BoardingHouseCameraController {
         User landlord = userDetails.getUser();
         cameraService.deleteCamera(cameraId, landlord);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/cameras/{cameraId}/stream")
+    public ResponseEntity<Map<String, String>> getCameraStream(
+            @PathVariable UUID cameraId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userDetails.getUser();
+        String streamUrl = cameraService.getCameraStreamUrl(cameraId, user);
+        return ResponseEntity.ok(Map.of("streamUrl", streamUrl));
     }
 }

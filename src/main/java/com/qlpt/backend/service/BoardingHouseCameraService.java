@@ -20,4 +20,6 @@ public interface BoardingHouseCameraService {
             User landlord);
 
     public void deleteCamera(UUID cameraId, User landlord);
+
+    public String getCameraStreamUrl(UUID cameraId, User user);
 }

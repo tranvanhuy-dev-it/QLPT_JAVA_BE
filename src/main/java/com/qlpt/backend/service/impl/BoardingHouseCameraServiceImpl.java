@@ -88,6 +88,9 @@ public class BoardingHouseCameraServiceImpl implements BoardingHouseCameraServic
                 request.safetyCode() == null || request.safetyCode().trim().isEmpty()) {
                 throw new RuntimeException("Số Serial (S/N) và Mã an toàn không được để trống đối với Camera Imou");
             }
+            // 1. Liên kết thiết bị lên tài khoản Cloud Developer trước
+            imouCloudService.bindDevice(request.serialNumber().trim(), request.safetyCode().trim());
+            // 2. Lấy URL luồng phát trực tiếp
             streamUrl = imouCloudService.getLiveStreamUrl(request.serialNumber().trim(), request.safetyCode().trim());
         } else {
             if (streamUrl == null || streamUrl.trim().isEmpty()) {
@@ -128,10 +131,11 @@ public class BoardingHouseCameraServiceImpl implements BoardingHouseCameraServic
                 request.safetyCode() == null || request.safetyCode().trim().isEmpty()) {
                 throw new RuntimeException("Số Serial (S/N) và Mã an toàn không được để trống đối với Camera Imou");
             }
-            // Chỉ gọi API Imou lấy lại stream URL mới nếu S/N hoặc Mã an toàn thay đổi, hoặc nếu stream URL hiện tại trống / là giả định cũ
+            // Chỉ liên kết lại và lấy lại stream URL mới nếu S/N hoặc Mã an toàn thay đổi, hoặc nếu stream URL hiện tại trống
             if (camera.getStreamUrl() == null || !brand.equals(camera.getBrand()) ||
                 !request.serialNumber().equals(camera.getSerialNumber()) ||
                 !request.safetyCode().equals(camera.getSafetyCode())) {
+                imouCloudService.bindDevice(request.serialNumber().trim(), request.safetyCode().trim());
                 streamUrl = imouCloudService.getLiveStreamUrl(request.serialNumber().trim(), request.safetyCode().trim());
             } else {
                 streamUrl = camera.getStreamUrl();
@@ -163,5 +167,35 @@ public class BoardingHouseCameraServiceImpl implements BoardingHouseCameraServic
         getBoardingHouseAndVerifyLandlord(camera.getBoardingHouse().getId(), landlord);
 
         boardingHouseCameraRepository.delete(camera);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public String getCameraStreamUrl(UUID cameraId, User user) {
+        BoardingHouseCamera camera = boardingHouseCameraRepository.findById(cameraId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy camera"));
+
+        // Phân quyền
+        if ("LANDLORD".equals(user.getRole().name())) {
+            if (!camera.getBoardingHouse().getLandlord().getId().equals(user.getId())) {
+                throw new RuntimeException("Bạn không có quyền truy cập camera này");
+            }
+        } else if ("TENANT".equals(user.getRole().name())) {
+            List<BoardingHouseCamera> tenantCameras = boardingHouseCameraRepository.findTenantCameras(user.getId());
+            boolean hasAccess = tenantCameras.stream().anyMatch(c -> c.getId().equals(cameraId));
+            if (!hasAccess) {
+                throw new RuntimeException("Bạn không có quyền truy cập camera này");
+            }
+        } else {
+            throw new RuntimeException("Vai trò không hợp lệ");
+        }
+
+        // Nếu là IMOU, lấy URL luồng trực tiếp động mới từ Cloud
+        if ("IMOU".equals(camera.getBrand())) {
+            return imouCloudService.getLiveStreamUrl(camera.getSerialNumber().trim(), camera.getSafetyCode().trim());
+        }
+
+        // Nếu là CUSTOM, trả về URL đã lưu tĩnh
+        return camera.getStreamUrl();
     }
 }
