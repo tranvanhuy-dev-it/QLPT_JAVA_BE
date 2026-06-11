@@ -46,4 +46,32 @@ public record ContractResponse(
             contract.getFixedBillingDay()
         );
     }
+
+    public static ContractResponse fromEntityLight(Contract contract) {
+        if (contract == null) return null;
+        try {
+            contract.getStartDate();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
+
+        ContractAddendum latest = contract.getLatestAddendum();
+        double roomPrice = latest != null ? latest.getRoomPrice() : contract.getContractedRoomPrice();
+        int tenants = latest != null ? latest.getNumberOfTenants() : contract.getNumberOfTenants();
+        RoomResponse roomResponse = RoomResponse.fromEntityLight(contract.getRoom());
+
+        return new ContractResponse(
+            contract.getId(),
+            contract.getStartDate(),
+            contract.getEndDate(),
+            contract.getDeposit(),
+            roomPrice,
+            contract.getStatus(),
+            roomResponse,
+            UserResponse.fromEntityLight(contract.getTenant()),
+            tenants,
+            contract.getFixedBillingDay()
+        );
+    }
 }
+

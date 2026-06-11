@@ -38,4 +38,24 @@ public record RoomResponse(
             BoardingHouseResponse.fromEntity(room.getBoardingHouse(), latest)
         );
     }
+
+    public static RoomResponse fromEntityLight(Room room) {
+        if (room == null) return null;
+        try {
+            room.getRoomNumber();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
+        return new RoomResponse(
+            room.getId(),
+            room.getRoomNumber(),
+            room.getBasePrice(),
+            room.getCurrentElectricityIndex(),
+            room.getCurrentWaterIndex(),
+            room.getMaxPeople(),
+            room.getStatus(),
+            BoardingHouseResponse.fromEntityLight(room.getBoardingHouse())
+        );
+    }
 }
+

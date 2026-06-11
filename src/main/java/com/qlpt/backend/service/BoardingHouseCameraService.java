@@ -1,5 +1,6 @@
 package com.qlpt.backend.service;
 
+// Service for managing boarding house cameras
 import com.qlpt.backend.dto.boardinghouse.BoardingHouseCameraCreateRequest;
 import com.qlpt.backend.dto.boardinghouse.BoardingHouseCameraResponse;
 import com.qlpt.backend.entity.User;

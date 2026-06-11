@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO Request for support contact form
 @Data
 @Builder
 @NoArgsConstructor

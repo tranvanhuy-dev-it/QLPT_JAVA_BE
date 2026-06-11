@@ -85,7 +85,7 @@ public class ContractController {
                 throw new RuntimeException("Tài khoản của bạn không được cấp quyền thực hiện chức năng này");
             }
         }
-        return ResponseEntity.ok(contracts.map(ContractResponse::fromEntity));
+        return ResponseEntity.ok(contracts.map(ContractResponse::fromEntityLight));
     }
 
     @GetMapping("/{id}")

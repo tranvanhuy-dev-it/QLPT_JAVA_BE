@@ -59,4 +59,36 @@ public record InvoiceResponse(
             invoice.getDiscount()
         );
     }
+
+    public static InvoiceResponse fromEntityLight(Invoice invoice) {
+        if (invoice == null) return null;
+        try {
+            invoice.getInvoiceDate();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
+        return new InvoiceResponse(
+            invoice.getId(),
+            invoice.getInvoiceDate(),
+            invoice.getBillingPeriodStart(),
+            invoice.getBillingPeriodEnd(),
+            invoice.getOldElectricityIndex(),
+            invoice.getNewElectricityIndex(),
+            invoice.getElectricityRate(),
+            invoice.getOldWaterIndex(),
+            invoice.getNewWaterIndex(),
+            invoice.getWaterRate(),
+            invoice.getRoomPrice(),
+            invoice.getWaterBillingType(),
+            invoice.getNumberOfTenants(),
+            invoice.getContractedRoomPrice(),
+            invoice.getTotalAmount(),
+            invoice.getPaidAmount(),
+            invoice.getStatus(),
+            invoice.getPaymentDate(),
+            ContractResponse.fromEntityLight(invoice.getContract()),
+            invoice.getDiscount()
+        );
+    }
 }
+

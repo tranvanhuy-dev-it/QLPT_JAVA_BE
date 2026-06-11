@@ -1,5 +1,6 @@
 package com.qlpt.backend;
 
+// Unit tests for InvoiceServiceImpl
 import com.qlpt.backend.dto.invoice.InvoiceCreateRequest;
 import com.qlpt.backend.dto.invoice.BulkBillingRoomStatus;
 import com.qlpt.backend.entity.*;

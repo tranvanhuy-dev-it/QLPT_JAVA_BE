@@ -3,6 +3,7 @@ import com.qlpt.backend.dto.user.UserResponse;
 import com.qlpt.backend.dto.extrafee.ExtraFeeResponse;
 
 import com.qlpt.backend.entity.BoardingHouse;
+// Import the water billing type enum
 import com.qlpt.backend.enums.WaterBillingType;
 import com.qlpt.backend.entity.ContractAddendum;
 import java.util.List;
@@ -66,4 +67,29 @@ public record BoardingHouseResponse(
             bh.getFixedBillingDay()
         );
     }
+
+    public static BoardingHouseResponse fromEntityLight(BoardingHouse bh) {
+        if (bh == null) return null;
+        try {
+            bh.getName();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
+        return new BoardingHouseResponse(
+            bh.getId(),
+            bh.getName(),
+            bh.getAddress(),
+            bh.getDefaultElectricityRate(),
+            bh.getDefaultWaterRate(),
+            bh.getWaterBillingType(),
+            null, // extraFees
+            null, // landlord
+            null, // bankName
+            null, // bankAccountNumber
+            null, // bankAccountName
+            null, // rules
+            bh.getFixedBillingDay()
+        );
+    }
 }
+

@@ -1,6 +1,5 @@
 package com.qlpt.backend.entity;
 
-import com.qlpt.backend.enums.WaterBillingType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;

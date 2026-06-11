@@ -70,7 +70,7 @@ public class InvoiceController {
         } else {
             throw new RuntimeException("Tài khoản của bạn không được cấp quyền thực hiện chức năng này");
         }
-        return ResponseEntity.ok(invoices.map(InvoiceResponse::fromEntity));
+        return ResponseEntity.ok(invoices.map(InvoiceResponse::fromEntityLight));
     }
 
     @GetMapping("/{id}")

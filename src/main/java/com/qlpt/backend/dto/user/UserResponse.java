@@ -52,4 +52,32 @@ public record UserResponse(
             user.getImouAppSecret() != null ? "********" : null
         );
     }
+
+    public static UserResponse fromEntityLight(User user) {
+        if (user == null) return null;
+        try {
+            user.getUsername();
+        } catch (org.hibernate.LazyInitializationException e) {
+            return null;
+        }
+        return new UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getPhone(),
+            user.getFullName(),
+            user.getStatus(),
+            user.getRole(),
+            null, // hasActiveContract
+            null, // identityCard
+            null, // idCardIssueDate
+            null, // idCardIssuePlace
+            null, // permanentAddress
+            null, // createdAt
+            null, // subscriptionExpiredAt
+            null, // imouAppId
+            null  // imouAppSecret
+        );
+    }
 }
+

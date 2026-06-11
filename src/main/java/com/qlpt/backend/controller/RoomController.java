@@ -103,7 +103,7 @@ public class RoomController {
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
         Page<Room> rooms = roomService.getRoomsByBoardingHouse(bhId, landlord, pageable);
-        return ResponseEntity.ok(rooms.map(RoomResponse::fromEntity));
+        return ResponseEntity.ok(rooms.map(RoomResponse::fromEntityLight));
     }
 
     @GetMapping
@@ -112,7 +112,7 @@ public class RoomController {
             @PageableDefault(size = 10) Pageable pageable) {
         User landlord = userDetails.getUser();
         Page<Room> rooms = roomService.getRoomsByLandlord(landlord, pageable);
-        return ResponseEntity.ok(rooms.map(RoomResponse::fromEntity));
+        return ResponseEntity.ok(rooms.map(RoomResponse::fromEntityLight));
     }
 
     @GetMapping("/{id}")

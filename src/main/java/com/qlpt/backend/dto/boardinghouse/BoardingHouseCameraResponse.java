@@ -4,6 +4,7 @@ import com.qlpt.backend.entity.BoardingHouseCamera;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+// DTO Response for boarding house camera
 public record BoardingHouseCameraResponse(
     UUID id,
     UUID boardingHouseId,
