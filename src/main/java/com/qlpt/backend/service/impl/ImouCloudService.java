@@ -156,7 +156,7 @@ public class ImouCloudService {
         String nonce = UUID.randomUUID().toString().replace("-", "");
 
         // 🔥 FIX SIGN (chuẩn phổ biến IMOU)
-        String signRaw = appId + appSecret + time + nonce;
+        String signRaw = appId + time + nonce + appSecret;
         String sign = md5(signRaw);
 
         Map<String, Object> system = new HashMap<>();
