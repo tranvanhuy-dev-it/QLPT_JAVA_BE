@@ -1,8 +1,6 @@
 package com.qlpt.backend.dto.auth;
 
-import com.qlpt.backend.enums.Role;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -21,6 +19,7 @@ public class RegisterRequest {
     private java.time.LocalDate idCardIssueDate;
     private String idCardIssuePlace;
 
-    @NotNull(message = "Vai trò không được trống")
-    private Role role;
+    // SECURITY: role KHÔNG nhận từ client.
+    // Endpoint /api/auth/register luôn tạo tài khoản LANDLORD.
+    // Role được gán cứng trong AuthServiceImpl.registerUser()
 }

@@ -27,9 +27,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
-        if (request.getRole() == com.qlpt.backend.enums.Role.TENANT) {
-            throw new RuntimeException("Người thuê phải do chủ trọ cấp tài khoản, không thể tự đăng ký");
-        }
         User user = authService.registerUser(request);
         return ResponseEntity.ok(UserResponse.fromEntity(user));
     }

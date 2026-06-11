@@ -106,13 +106,15 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
 
+        // SECURITY: Role luôn là LANDLORD cho endpoint tự đăng ký.
+        // Không dùng request.getRole() để tránh người dùng tự đặt role = ADMIN.
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .fullName(request.getFullName())
-                .role(request.getRole())
+                .role(Role.LANDLORD)
                 .status("ACTIVE")
                 .identityCard(request.getIdentityCard())
                 .idCardIssueDate(request.getIdCardIssueDate())

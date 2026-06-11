@@ -25,14 +25,14 @@ public class InvoiceItem {
     private Invoice invoice;
 
     @Column(nullable = false)
-    private String name;
+    private String name; // e.g. "Phụ phí Wifi", "Phí rác"
 
     @Column(nullable = false)
-    private double price;
+    private double price; // Đơn giá tại thời điểm xuất hóa đơn
 
     @Column(nullable = false)
-    private double quantity;
+    private double quantity; // Số lượng (ví dụ số người ở hoặc 1 phòng)
 
     @Column(nullable = false)
-    private double subtotal;
+    private double subtotal; // Thành tiền (price * quantity)
 }
