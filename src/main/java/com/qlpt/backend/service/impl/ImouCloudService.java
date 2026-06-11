@@ -61,7 +61,7 @@ public class ImouCloudService {
             Map<String, Object> params = new HashMap<>();
             params.put("token", accessToken);
             params.put("deviceId", serialNumber);
-            params.put("deviceVerifyCode", safetyCode);
+            params.put("code", safetyCode);
 
             JsonNode res = sendPostRequest("/bindDevice", params);
             if (res != null && res.has("result")) {
@@ -133,7 +133,7 @@ public class ImouCloudService {
             Map<String, Object> params = new HashMap<>();
             params.put("token", token);
             params.put("deviceId", deviceId);
-            params.put("deviceVerifyCode", code);
+            params.put("code", code);
 
             JsonNode res = sendPostRequest("/bindDevice", params);
 
