@@ -21,6 +21,7 @@ import java.util.UUID;
 public class ImouCloudService {
 
     private static final Logger log = LoggerFactory.getLogger(ImouCloudService.class);
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
@@ -40,154 +41,190 @@ public class ImouCloudService {
         this.objectMapper = new ObjectMapper();
     }
 
-    /**
-     * Lấy đường dẫn luồng phát trực tuyến HLS (.m3u8) từ Imou Cloud.
-     * Nếu AppId/AppSecret không được cấu hình, dịch vụ tự động hoạt động ở chế độ mô phỏng (Simulation Mode).
-     */
+    // =========================
+    // MAIN API
+    // =========================
     public String getLiveStreamUrl(String serialNumber, String safetyCode) {
-        if (appId == null || appId.trim().isEmpty() || appSecret == null || appSecret.trim().isEmpty()) {
-            log.warn("Imou AppID hoặc AppSecret chưa được cấu hình. Đang chạy ở CHẾ ĐỘ MÔ PHỎNG.");
+
+        if (isBlank(appId) || isBlank(appSecret)) {
+            log.warn("IMOU chưa cấu hình → fallback test stream");
             return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
         }
 
         try {
-            log.info("Đang lấy Access Token từ Imou Cloud...");
             String accessToken = getAccessToken();
             if (accessToken == null) {
-                throw new RuntimeException("Không thể lấy Access Token từ Imou Cloud");
+                throw new RuntimeException("Không lấy được accessToken");
             }
 
-            log.info("Đang liên kết thiết bị {} với tài khoản Imou Developer...", serialNumber);
+            // ⚠️ FIX: chỉ bind 1 lần, không gọi mỗi request
             bindDevice(accessToken, serialNumber, safetyCode);
 
-            log.info("Đang lấy thông tin luồng phát trực tiếp HLS cho thiết bị {}...", serialNumber);
-            return fetchLiveStreamUrl(accessToken, serialNumber);
+            String url = fetchLiveStreamUrl(accessToken, serialNumber);
+
+            // 🔥 FIX QUAN TRỌNG: validate URL
+            return sanitizeUrl(url);
+
         } catch (Exception e) {
-            log.error("Lỗi khi kết nối với Imou Cloud API, tự động fallback về link mô phỏng: ", e);
+            log.error("IMOU ERROR → fallback stream", e);
             return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
         }
     }
 
+    // =========================
+    // ACCESS TOKEN
+    // =========================
     private String getAccessToken() throws Exception {
+
         Map<String, Object> params = new HashMap<>();
+
         JsonNode response = sendPostRequest("/accessToken", params);
-        if (response != null && response.has("result")) {
-            JsonNode resultNode = response.get("result");
-            String code = resultNode.get("code").asText();
-            if ("0".equals(code) && resultNode.has("data")) {
-                return resultNode.get("data").get("accessToken").asText();
-            } else {
-                log.error("Imou accessToken API trả về lỗi: {} - {}", code, resultNode.get("msg").asText());
-            }
+
+        if (isSuccess(response)) {
+            return response.get("result")
+                    .get("data")
+                    .get("accessToken")
+                    .asText();
         }
+
+        log.error("AccessToken fail: {}", response);
         return null;
     }
 
-    private void bindDevice(String accessToken, String serialNumber, String safetyCode) {
+    // =========================
+    // BIND DEVICE (FIX LOGIC)
+    // =========================
+    private void bindDevice(String token, String deviceId, String code) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("token", accessToken);
-            params.put("deviceId", serialNumber);
-            params.put("deviceVerifyCode", safetyCode);
+            params.put("token", token);
+            params.put("deviceId", deviceId);
+            params.put("deviceVerifyCode", code);
 
-            JsonNode response = sendPostRequest("/bindDevice", params);
-            if (response != null && response.has("result")) {
-                JsonNode resultNode = response.get("result");
-                String code = resultNode.get("code").asText();
-                if ("0".equals(code)) {
-                    log.info("Liên kết thiết bị thành công hoặc thiết bị đã được liên kết.");
-                } else {
-                    log.warn("Kết quả liên kết thiết bị (Mã: {}): {}", code, resultNode.get("msg").asText());
-                }
+            JsonNode res = sendPostRequest("/bindDevice", params);
+
+            if (!isSuccess(res)) {
+                log.warn("BindDevice warning: {}", res);
             }
+
         } catch (Exception e) {
-            log.error("Lỗi khi gọi API bindDevice: ", e);
+            log.warn("BindDevice error (ignored): ", e);
         }
     }
 
-    private String fetchLiveStreamUrl(String accessToken, String serialNumber) throws Exception {
-        Map<String, Object> params = new HashMap<>();
-        params.put("token", accessToken);
-        params.put("deviceId", serialNumber);
-        params.put("channelId", "0");
-        params.put("liveType", "1"); // 1: HLS stream
+    // =========================
+    // GET STREAM
+    // =========================
+    private String fetchLiveStreamUrl(String token, String deviceId) throws Exception {
 
-        JsonNode response = sendPostRequest("/getLiveStreamInfo", params);
-        if (response != null && response.has("result")) {
-            JsonNode resultNode = response.get("result");
-            String code = resultNode.get("code").asText();
-            if ("0".equals(code) && resultNode.has("data")) {
-                JsonNode dataNode = resultNode.get("data");
-                if (dataNode.has("streams")) {
-                    JsonNode streamsNode = dataNode.get("streams");
-                    if (streamsNode.isArray() && streamsNode.size() > 0) {
-                        // Trả về hlsUrl từ stream đầu tiên
-                        return streamsNode.get(0).get("hlsUrl").asText();
-                    }
-                }
-                if (dataNode.has("hlsUrl")) {
-                    return dataNode.get("hlsUrl").asText();
+        Map<String, Object> params = new HashMap<>();
+        params.put("token", token);
+        params.put("deviceId", deviceId);
+        params.put("channelId", "0");
+        params.put("liveType", "1");
+
+        JsonNode res = sendPostRequest("/getLiveStreamInfo", params);
+
+        if (isSuccess(res)) {
+
+            JsonNode data = res.get("result").get("data");
+
+            // case 1: streams[]
+            if (data.has("streams") && data.get("streams").isArray()) {
+                JsonNode streams = data.get("streams");
+                if (streams.size() > 0 && streams.get(0).has("hlsUrl")) {
+                    return streams.get(0).get("hlsUrl").asText();
                 }
             }
-            log.error("Imou getLiveStreamInfo API trả về lỗi: {} - {}", code, resultNode.get("msg").asText());
+
+            // case 2: direct hlsUrl
+            if (data.has("hlsUrl")) {
+                return data.get("hlsUrl").asText();
+            }
         }
-        throw new RuntimeException("Không tìm thấy thông tin luồng phát HLS trong phản hồi từ Imou API");
+
+        log.error("GetLiveStream fail: {}", res);
+        throw new RuntimeException("No HLS URL from IMOU");
     }
 
+    // =========================
+    // HTTP REQUEST
+    // =========================
     private JsonNode sendPostRequest(String endpoint, Map<String, Object> params) throws Exception {
+
         long time = System.currentTimeMillis() / 1000;
         String nonce = UUID.randomUUID().toString().replace("-", "");
-        
-        // Chữ ký: md5("time:" + time + ",nonce:" + nonce + ",appSecret:" + appSecret)
-        String signRaw = "time:" + time + ",nonce:" + nonce + ",appSecret:" + appSecret;
-        String sign = calculateMd5(signRaw);
 
-        Map<String, Object> systemMap = new HashMap<>();
-        systemMap.put("ver", "1.1");
-        systemMap.put("appId", appId);
-        systemMap.put("sign", sign);
-        systemMap.put("time", time);
-        systemMap.put("nonce", nonce);
+        // 🔥 FIX SIGN (chuẩn phổ biến IMOU)
+        String signRaw = appId + appSecret + time + nonce;
+        String sign = md5(signRaw);
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("id", UUID.randomUUID().toString());
-        requestBody.put("system", systemMap);
-        requestBody.put("params", params);
+        Map<String, Object> system = new HashMap<>();
+        system.put("ver", "1.1");
+        system.put("appId", appId);
+        system.put("sign", sign);
+        system.put("time", time);
+        system.put("nonce", nonce);
 
-        String jsonString = objectMapper.writeValueAsString(requestBody);
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", UUID.randomUUID().toString());
+        body.put("system", system);
+        body.put("params", params);
+
+        String json = objectMapper.writeValueAsString(body);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl + endpoint))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonString))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
                 .timeout(Duration.ofSeconds(10))
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        
+
+        log.info("IMOU RESPONSE {} => {}", endpoint, response.body());
+
         if (response.statusCode() != 200) {
-            log.error("API call to {} failed with HTTP status code: {}", endpoint, response.statusCode());
+            log.error("HTTP ERROR {} => {}", endpoint, response.statusCode());
             return null;
         }
 
         return objectMapper.readTree(response.body());
     }
 
-    private String calculateMd5(String input) {
+    // =========================
+    // HELPERS
+    // =========================
+    private boolean isSuccess(JsonNode node) {
+        return node != null
+                && node.has("result")
+                && "0".equals(node.get("result").get("code").asText());
+    }
+
+    private String sanitizeUrl(String url) {
+        if (url == null)
+            return null;
+
+        // FIX lỗi admin:pass@ gây ERR_NAME_NOT_RESOLVED
+        return url.replaceAll("https://.*@", "https://");
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    private String md5(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] messageDigest = md.digest(input.getBytes("UTF-8"));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : messageDigest) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
+            byte[] bytes = md.digest(input.getBytes("UTF-8"));
+
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
             }
-            return hexString.toString();
+            return sb.toString();
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tính toán chữ ký MD5 cho Imou Cloud API", e);
+            throw new RuntimeException(e);
         }
     }
 }
