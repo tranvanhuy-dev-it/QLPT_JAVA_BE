@@ -98,8 +98,8 @@ public class BoardingHouseCameraServiceImpl implements BoardingHouseCameraServic
         BoardingHouseCamera camera = BoardingHouseCamera.builder()
                 .name(request.name())
                 .streamUrl(streamUrl)
-                .username(request.username())
-                .password(request.password())
+                .username("IMOU".equals(brand) ? null : request.username())
+                .password("IMOU".equals(brand) ? null : request.password())
                 .brand(brand)
                 .serialNumber(request.serialNumber())
                 .safetyCode(request.safetyCode())
@@ -144,8 +144,8 @@ public class BoardingHouseCameraServiceImpl implements BoardingHouseCameraServic
 
         camera.setName(request.name());
         camera.setStreamUrl(streamUrl);
-        camera.setUsername(request.username());
-        camera.setPassword(request.password());
+        camera.setUsername("IMOU".equals(brand) ? null : request.username());
+        camera.setPassword("IMOU".equals(brand) ? null : request.password());
         camera.setBrand(brand);
         camera.setSerialNumber(request.serialNumber());
         camera.setSafetyCode(request.safetyCode());
