@@ -16,6 +16,7 @@ import com.qlpt.backend.repository.BoardingHouseRepository;
 import com.qlpt.backend.repository.InvoiceRepository;
 import com.qlpt.backend.repository.TaxDeclarationRepository;
 import com.qlpt.backend.repository.TaxSettingRepository;
+import com.qlpt.backend.repository.UserRepository;
 import com.qlpt.backend.service.impl.TaxDeclarationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,9 @@ public class TaxDeclarationServiceTest {
     @Mock
     private BoardingHouseRepository boardingHouseRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private TaxDeclarationServiceImpl taxDeclarationService;
 
@@ -82,6 +86,7 @@ public class TaxDeclarationServiceTest {
 
     @Test
     public void testGetTaxSetting_DefaultValues() {
+        when(userRepository.findById(landlord.getId())).thenReturn(Optional.of(landlord));
         when(taxSettingRepository.findByLandlordId(landlord.getId())).thenReturn(Optional.empty());
         when(taxSettingRepository.save(any(TaxSetting.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -96,6 +101,7 @@ public class TaxDeclarationServiceTest {
 
     @Test
     public void testUpdateTaxSetting() {
+        when(userRepository.findById(landlord.getId())).thenReturn(Optional.of(landlord));
         when(taxSettingRepository.findByLandlordId(landlord.getId())).thenReturn(Optional.of(taxSetting));
         when(taxSettingRepository.save(any(TaxSetting.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -120,7 +126,8 @@ public class TaxDeclarationServiceTest {
         request.setPeriodValue(6);
         request.setBoardingHouseId(null);
 
-        // Mock tax settings
+        // Mock userRepository and tax settings
+        when(userRepository.findById(landlord.getId())).thenReturn(Optional.of(landlord));
         when(taxSettingRepository.findByLandlordId(landlord.getId())).thenReturn(Optional.of(taxSetting));
 
         // Mock invoices: total in June is 10M, total in year is 60M (below 500M)
@@ -153,6 +160,7 @@ public class TaxDeclarationServiceTest {
         request.setPeriodValue(6);
         request.setBoardingHouseId(null);
 
+        when(userRepository.findById(landlord.getId())).thenReturn(Optional.of(landlord));
         when(taxSettingRepository.findByLandlordId(landlord.getId())).thenReturn(Optional.of(taxSetting));
 
         // Mock invoices: total in June is 50M.
@@ -194,6 +202,7 @@ public class TaxDeclarationServiceTest {
         request.setPeriodValue(6);
         request.setBoardingHouseId(null);
 
+        when(userRepository.findById(landlord.getId())).thenReturn(Optional.of(landlord));
         when(taxDeclarationRepository.existsByLandlordAndYearAndPeriodTypeAndPeriodValueAndBoardingHouseIsNull(
                 eq(landlord), eq(2026), eq("MONTH"), eq(6))).thenReturn(true);
 

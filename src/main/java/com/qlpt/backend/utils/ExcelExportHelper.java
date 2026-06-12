@@ -129,8 +129,13 @@ public class ExcelExportHelper {
             row.createCell(2).setCellValue(totalDebt);
             row.getCell(2).setCellStyle(currencyStyle);
             
-            summarySheet.autoSizeColumn(1);
-            summarySheet.autoSizeColumn(2);
+            try {
+                summarySheet.autoSizeColumn(1);
+                summarySheet.autoSizeColumn(2);
+            } catch (Exception e) {
+                summarySheet.setColumnWidth(1, 30 * 256);
+                summarySheet.setColumnWidth(2, 20 * 256);
+            }
             
             // Create Sheet 2: Detailed Invoices
             Sheet detailSheet = workbook.createSheet("Chi tiet doanh thu");
@@ -167,10 +172,26 @@ public class ExcelExportHelper {
                 detRow.createCell(0).setCellValue(i + 1);
                 detRow.getCell(0).setCellStyle(centerStyle);
                 
-                detRow.createCell(1).setCellValue(inv.getContract().getRoom().getBoardingHouse().getName());
-                detRow.createCell(2).setCellValue(inv.getContract().getRoom().getRoomNumber());
-                detRow.createCell(3).setCellValue(inv.getContract().getTenant().getFullName() != null ? 
-                    inv.getContract().getTenant().getFullName() : inv.getContract().getTenant().getUsername());
+                String bhNameStr = "—";
+                String roomNumStr = "—";
+                String tenantNameStr = "—";
+                
+                if (inv.getContract() != null) {
+                    if (inv.getContract().getRoom() != null) {
+                        roomNumStr = inv.getContract().getRoom().getRoomNumber();
+                        if (inv.getContract().getRoom().getBoardingHouse() != null) {
+                            bhNameStr = inv.getContract().getRoom().getBoardingHouse().getName();
+                        }
+                    }
+                    if (inv.getContract().getTenant() != null) {
+                        tenantNameStr = inv.getContract().getTenant().getFullName() != null ? 
+                            inv.getContract().getTenant().getFullName() : inv.getContract().getTenant().getUsername();
+                    }
+                }
+                
+                detRow.createCell(1).setCellValue(bhNameStr);
+                detRow.createCell(2).setCellValue(roomNumStr);
+                detRow.createCell(3).setCellValue(tenantNameStr);
                 
                 detRow.createCell(4).setCellValue(inv.getInvoiceDate().format(formatter));
                 detRow.getCell(4).setCellStyle(centerStyle);
@@ -226,7 +247,11 @@ public class ExcelExportHelper {
             
             // Auto-size columns for sheet 2
             for (int i = 0; i < headers.length; i++) {
-                detailSheet.autoSizeColumn(i);
+                try {
+                    detailSheet.autoSizeColumn(i);
+                } catch (Exception e) {
+                    detailSheet.setColumnWidth(i, 15 * 256);
+                }
             }
             
             ByteArrayOutputStream out = new ByteArrayOutputStream();
