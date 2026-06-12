@@ -47,14 +47,17 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     @Override
     public ChatRoom getOrCreateChatRoom(Contract contract) {
-        Optional<ChatRoom> existingRoom = chatRoomRepository.findByContract(contract);
+        User landlord = contract.getRoom().getBoardingHouse().getLandlord();
+        User tenant = contract.getTenant();
+
+        Optional<ChatRoom> existingRoom = chatRoomRepository.findChatRoomBetweenUsers(landlord, tenant);
         if (existingRoom.isPresent()) {
             return existingRoom.get();
         }
 
         ChatRoom chatRoom = ChatRoom.builder()
-                .room(contract.getRoom())
-                .contract(contract)
+                .room(null)
+                .contract(null)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -62,7 +65,6 @@ public class ChatServiceImpl implements ChatService {
         ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
         // Add Landlord as member
-        User landlord = contract.getRoom().getBoardingHouse().getLandlord();
         ChatRoomMember landlordMember = ChatRoomMember.builder()
                 .chatRoom(savedRoom)
                 .user(landlord)
@@ -71,7 +73,6 @@ public class ChatServiceImpl implements ChatService {
         chatRoomMemberRepository.save(landlordMember);
 
         // Add Tenant as member
-        User tenant = contract.getTenant();
         ChatRoomMember tenantMember = ChatRoomMember.builder()
                 .chatRoom(savedRoom)
                 .user(tenant)
@@ -117,10 +118,27 @@ public class ChatServiceImpl implements ChatService {
             // Get unread count
             long unreadCount = messageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, user);
 
+            // Find members to identify tenant
+            List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom(room);
+            User tenantUser = members.stream()
+                    .map(ChatRoomMember::getUser)
+                    .filter(u -> u.getRole() == Role.TENANT)
+                    .findFirst()
+                    .orElse(null);
+
+            // Find active room dynamically from the tenant's active contract
+            Room activeRoom = null;
+            if (tenantUser != null) {
+                Page<Contract> activeContracts = contractRepository.findByTenantIdAndStatus(tenantUser.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 1));
+                if (activeContracts.hasContent()) {
+                    activeRoom = activeContracts.getContent().get(0).getRoom();
+                }
+            }
+
             return new ChatRoomResponse(
                     room.getId(),
-                    RoomResponse.fromEntityLight(room.getRoom()),
-                    UserResponse.fromEntityLight(room.getContract().getTenant()),
+                    activeRoom != null ? RoomResponse.fromEntityLight(activeRoom) : null,
+                    tenantUser != null ? UserResponse.fromEntityLight(tenantUser) : null,
                     room.getCreatedAt(),
                     room.getUpdatedAt(),
                     lastMessage,

@@ -103,7 +103,7 @@ public class ChatServiceTest {
     @Test
     public void testGetOrCreateChatRoom_CreateNew() {
         // GIVEN
-        when(chatRoomRepository.findByContract(contract)).thenReturn(Optional.empty());
+        when(chatRoomRepository.findChatRoomBetweenUsers(landlord, tenant)).thenReturn(Optional.empty());
         when(chatRoomRepository.save(any(ChatRoom.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // WHEN
@@ -111,8 +111,8 @@ public class ChatServiceTest {
 
         // THEN
         assertNotNull(created);
-        assertEquals(room, created.getRoom());
-        assertEquals(contract, created.getContract());
+        assertNull(created.getRoom());
+        assertNull(created.getContract());
         verify(chatRoomRepository, times(1)).save(any(ChatRoom.class));
         verify(chatRoomMemberRepository, times(2)).save(any(ChatRoomMember.class));
     }
@@ -120,7 +120,7 @@ public class ChatServiceTest {
     @Test
     public void testGetOrCreateChatRoom_Existing() {
         // GIVEN
-        when(chatRoomRepository.findByContract(contract)).thenReturn(Optional.of(chatRoom));
+        when(chatRoomRepository.findChatRoomBetweenUsers(landlord, tenant)).thenReturn(Optional.of(chatRoom));
 
         // WHEN
         ChatRoom result = chatService.getOrCreateChatRoom(contract);
@@ -137,12 +137,17 @@ public class ChatServiceTest {
         Page<Contract> contractPage = new PageImpl<>(Collections.singletonList(contract));
         when(contractRepository.findByTenantIdAndStatus(tenant.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 10)))
                 .thenReturn(contractPage);
-        when(chatRoomRepository.findByContract(contract)).thenReturn(Optional.of(chatRoom));
+        when(chatRoomRepository.findChatRoomBetweenUsers(landlord, tenant)).thenReturn(Optional.of(chatRoom));
 
         Page<ChatRoom> roomPage = new PageImpl<>(Collections.singletonList(chatRoom));
         when(chatRoomRepository.findByUserOrderByUpdatedAtDesc(tenant, Pageable.unpaged())).thenReturn(roomPage);
         when(messageRepository.findByChatRoomOrderByCreatedAtDesc(any(ChatRoom.class), any(Pageable.class)))
                 .thenReturn(Page.empty());
+
+        ChatRoomMember member = ChatRoomMember.builder().chatRoom(chatRoom).user(tenant).build();
+        when(chatRoomMemberRepository.findByChatRoom(chatRoom)).thenReturn(Collections.singletonList(member));
+        when(contractRepository.findByTenantIdAndStatus(tenant.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 1)))
+                .thenReturn(contractPage);
 
         // WHEN
         Page<ChatRoomResponse> responses = chatService.getChatRooms(tenant, Pageable.unpaged());

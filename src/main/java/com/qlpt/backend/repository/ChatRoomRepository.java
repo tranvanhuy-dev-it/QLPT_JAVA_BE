@@ -23,4 +23,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
 
     @Query("SELECT cm.chatRoom FROM ChatRoomMember cm WHERE cm.user = :user ORDER BY cm.chatRoom.updatedAt DESC")
     Page<ChatRoom> findByUserOrderByUpdatedAtDesc(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT cm1.chatRoom FROM ChatRoomMember cm1 JOIN ChatRoomMember cm2 ON cm1.chatRoom = cm2.chatRoom " +
+           "WHERE cm1.user = :user1 AND cm2.user = :user2")
+    Optional<ChatRoom> findChatRoomBetweenUsers(@Param("user1") User user1, @Param("user2") User user2);
 }
