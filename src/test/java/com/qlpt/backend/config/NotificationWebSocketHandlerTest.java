@@ -98,7 +98,7 @@ public class NotificationWebSocketHandlerTest {
 
         // Notify
         NotificationResponse response = new NotificationResponse(
-                UUID.randomUUID(), "Test Title", "Test Content", "INFO", false, LocalDateTime.now()
+                UUID.randomUUID(), "Test Title", "Test Content", "INFO", null, false, LocalDateTime.now()
         );
         when(session.isOpen()).thenReturn(true);
 
@@ -132,7 +132,7 @@ public class NotificationWebSocketHandlerTest {
         // THEN: send notification should not attempt to send to closed session
         reset(session); // Reset mocks to verify no further interactions
         NotificationResponse response = new NotificationResponse(
-                UUID.randomUUID(), "Test Title", "Test Content", "INFO", false, LocalDateTime.now()
+                UUID.randomUUID(), "Test Title", "Test Content", "INFO", null, false, LocalDateTime.now()
         );
         handler.sendNotificationToUser("testuser", response);
         verify(session, never()).sendMessage(any(TextMessage.class));
