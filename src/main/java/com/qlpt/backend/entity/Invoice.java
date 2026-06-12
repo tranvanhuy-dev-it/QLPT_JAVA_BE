@@ -81,6 +81,9 @@ public class Invoice {
     @Column(name = "payment_date")
     private LocalDate paymentDate;
 
+    @Column(name = "payment_claimed", nullable = false, columnDefinition = "boolean default false")
+    private boolean paymentClaimed = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contract_id", nullable = false)
     private Contract contract;

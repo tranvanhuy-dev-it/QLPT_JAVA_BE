@@ -236,6 +236,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         invoice.setPaidAmount(newPaid);
+        invoice.setPaymentClaimed(false);
         boolean isFullyPaid = false;
         if (newPaid >= invoice.getTotalAmount()) {
             invoice.setStatus(InvoiceStatus.PAID);
@@ -432,6 +433,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         String title = "Khách báo đã chuyển khoản";
         String content = String.format("Phòng %s (dãy %s) báo đã thanh toán hóa đơn kỳ %s. Số tiền cần đóng: %,.0f VNĐ. Vui lòng kiểm tra tài khoản.",
                 roomNumber, bhName, billingPeriod, remainingAmount);
+
+        invoice.setPaymentClaimed(true);
+        invoiceRepository.save(invoice);
 
         // Tạo thông báo cho chủ trọ (createNotification tự động kích hoạt WebSocket đẩy đến chủ trọ)
         notificationService.createNotification(landlord, title, content, "PAYMENT_REPORTED");

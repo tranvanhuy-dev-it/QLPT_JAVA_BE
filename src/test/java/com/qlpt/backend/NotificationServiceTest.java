@@ -26,6 +26,12 @@ public class NotificationServiceTest {
     @Mock
     private NotificationRepository notificationRepository;
 
+    @Mock
+    private com.qlpt.backend.repository.UserRepository userRepository;
+
+    @Mock
+    private com.qlpt.backend.config.NotificationWebSocketHandler notificationWebSocketHandler;
+
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
@@ -82,5 +88,26 @@ public class NotificationServiceTest {
         // THEN
         assertEquals(5, deletedCount);
         verify(notificationRepository, times(1)).deleteByCreatedAtBefore(any(LocalDateTime.class));
+    }
+
+    @Test
+    public void testSendNotificationToAllTenants() {
+        // GIVEN
+        User landlord = User.builder().id(UUID.randomUUID()).username("landlord").build();
+        User tenant1 = User.builder().id(UUID.randomUUID()).username("tenant1").build();
+        User tenant2 = User.builder().id(UUID.randomUUID()).username("tenant2").build();
+        java.util.List<User> tenants = java.util.Arrays.asList(tenant1, tenant2);
+
+        when(userRepository.findByRoleAndLandlordId(com.qlpt.backend.enums.Role.TENANT, landlord.getId()))
+                .thenReturn(tenants);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // WHEN
+        notificationService.sendNotificationToAllTenants(landlord, "Hello", "Announcement");
+
+        // THEN
+        verify(userRepository, times(1)).findByRoleAndLandlordId(com.qlpt.backend.enums.Role.TENANT, landlord.getId());
+        verify(notificationRepository, times(2)).save(any(Notification.class));
+        verify(notificationWebSocketHandler, times(2)).sendNotificationToUser(any(String.class), any(NotificationResponse.class));
     }
 }

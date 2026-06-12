@@ -17,5 +17,7 @@ public interface NotificationService {
 
     public void markAllAsRead(User user);
 
+    public void sendNotificationToAllTenants(User landlord, String title, String content);
+
     public int deleteNotificationsOlderThan(int days);
 }

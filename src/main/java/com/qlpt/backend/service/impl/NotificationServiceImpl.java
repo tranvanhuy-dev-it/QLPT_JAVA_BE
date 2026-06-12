@@ -6,6 +6,8 @@ import com.qlpt.backend.dto.notification.NotificationResponse;
 import com.qlpt.backend.entity.Notification;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.repository.NotificationRepository;
+import com.qlpt.backend.repository.UserRepository;
+import com.qlpt.backend.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,11 +20,14 @@ import java.util.UUID;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
     private final com.qlpt.backend.config.NotificationWebSocketHandler notificationWebSocketHandler;
 
     public NotificationServiceImpl(NotificationRepository notificationRepository,
+                                   UserRepository userRepository,
                                    com.qlpt.backend.config.NotificationWebSocketHandler notificationWebSocketHandler) {
         this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
         this.notificationWebSocketHandler = notificationWebSocketHandler;
     }
 
@@ -94,5 +99,17 @@ public class NotificationServiceImpl implements NotificationService {
     public int deleteNotificationsOlderThan(int days) {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
         return notificationRepository.deleteByCreatedAtBefore(cutoff);
+    }
+
+    @Transactional
+    @Override
+    public void sendNotificationToAllTenants(User landlord, String title, String content) {
+        if (landlord == null) {
+            throw new IllegalArgumentException("Chủ trọ không thể để trống");
+        }
+        java.util.List<User> tenants = userRepository.findByRoleAndLandlordId(Role.TENANT, landlord.getId());
+        for (User tenant : tenants) {
+            createNotification(tenant, title, content, "BULLETIN");
+        }
     }
 }

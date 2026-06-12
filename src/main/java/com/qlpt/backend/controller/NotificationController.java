@@ -56,4 +56,27 @@ public class NotificationController {
         notificationService.markAllAsRead(user);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/send-to-all")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<Void> sendNotificationToAll(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @jakarta.validation.Valid @RequestBody SendAllNotificationRequest request) {
+        User landlord = userDetails.getUser();
+        notificationService.sendNotificationToAllTenants(landlord, request.getTitle(), request.getContent());
+        return ResponseEntity.ok().build();
+    }
+
+    public static class SendAllNotificationRequest {
+        @jakarta.validation.constraints.NotBlank(message = "Tiêu đề không được để trống")
+        private String title;
+
+        @jakarta.validation.constraints.NotBlank(message = "Nội dung không được để trống")
+        private String content;
+
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+        public String getContent() { return content; }
+        public void setContent(String content) { this.content = content; }
+    }
 }

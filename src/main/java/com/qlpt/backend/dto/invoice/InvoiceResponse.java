@@ -27,7 +27,8 @@ public record InvoiceResponse(
     InvoiceStatus status,
     LocalDate paymentDate,
     ContractResponse contract,
-    double discount
+    double discount,
+    boolean paymentClaimed
 ) {
     public static InvoiceResponse fromEntity(Invoice invoice) {
         if (invoice == null) return null;
@@ -56,7 +57,8 @@ public record InvoiceResponse(
             invoice.getStatus(),
             invoice.getPaymentDate(),
             ContractResponse.fromEntity(invoice.getContract()),
-            invoice.getDiscount()
+            invoice.getDiscount(),
+            invoice.isPaymentClaimed()
         );
     }
 
@@ -87,7 +89,8 @@ public record InvoiceResponse(
             invoice.getStatus(),
             invoice.getPaymentDate(),
             ContractResponse.fromEntityLight(invoice.getContract()),
-            invoice.getDiscount()
+            invoice.getDiscount(),
+            invoice.isPaymentClaimed()
         );
     }
 }

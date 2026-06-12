@@ -20,6 +20,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     java.util.List<User> findByRole(Role role);
     Page<User> findByRole(Role role, Pageable pageable);
+    java.util.List<User> findByRoleAndLandlordId(Role role, UUID landlordId);
     Page<User> findByRoleAndLandlordId(Role role, UUID landlordId, Pageable pageable);
     long countByRole(Role role);
 
