@@ -25,4 +25,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     List<Invoice> findByContractId(UUID contractId);
 
     Optional<Invoice> findFirstByContractIdOrderByBillingPeriodEndDesc(UUID contractId);
+
+    @EntityGraph(attributePaths = {"contract", "contract.room", "contract.tenant", "contract.room.boardingHouse"})
+    List<Invoice> findByContractRoomBoardingHouseLandlordIdAndInvoiceDateBetween(UUID landlordId, java.time.LocalDate start, java.time.LocalDate end);
+
+    @EntityGraph(attributePaths = {"contract", "contract.room", "contract.tenant", "contract.room.boardingHouse"})
+    List<Invoice> findByContractRoomBoardingHouseLandlordIdAndContractRoomBoardingHouseIdAndInvoiceDateBetween(UUID landlordId, UUID boardingHouseId, java.time.LocalDate start, java.time.LocalDate end);
 }
