@@ -140,7 +140,7 @@ public class ContractServiceImpl implements ContractService {
             String content = String.format("Hợp đồng thuê phòng %s tại nhà trọ %s của bạn đã được kích hoạt thành công.",
                     room.getRoomNumber(),
                     room.getBoardingHouse().getName());
-            notificationService.createNotification(tenant, title, content, "CONTRACT_ACTIVE");
+            notificationService.createNotification(tenant, title, content, "CONTRACT_ACTIVE", savedContract.getId());
         } catch (Exception e) {
             System.err.println("Lỗi khi gửi thông báo hợp đồng hoạt động: " + e.getMessage());
         }
@@ -207,19 +207,27 @@ public class ContractServiceImpl implements ContractService {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<Contract> getContractsByLandlord(User landlord, Pageable pageable) {
-        return contractRepository.findByRoomBoardingHouseLandlordId(landlord.getId(), pageable);
+    public Page<Contract> getContractsByLandlord(User landlord, Boolean showAll, Pageable pageable) {
+        if (showAll != null && showAll) {
+            return contractRepository.findByRoomBoardingHouseLandlordId(landlord.getId(), pageable);
+        } else {
+            return contractRepository.findByRoomBoardingHouseLandlordIdAndStatus(landlord.getId(), ContractStatus.ACTIVE, pageable);
+        }
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Page<Contract> getContractsByRoomAndLandlord(UUID roomId, User landlord, Pageable pageable) {
+    public Page<Contract> getContractsByRoomAndLandlord(UUID roomId, User landlord, Boolean showAll, Pageable pageable) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phòng trọ"));
         if (!room.getBoardingHouse().getLandlord().getId().equals(landlord.getId())) {
             throw new RuntimeException("Bạn không có quyền quản lý phòng trọ này");
         }
-        return contractRepository.findByRoomId(roomId, pageable);
+        if (showAll != null && showAll) {
+            return contractRepository.findByRoomId(roomId, pageable);
+        } else {
+            return contractRepository.findByRoomIdAndStatus(roomId, ContractStatus.ACTIVE, pageable);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -256,8 +264,12 @@ public class ContractServiceImpl implements ContractService {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<Contract> getContractsByTenant(User tenant, Pageable pageable) {
-        return contractRepository.findByTenantId(tenant.getId(), pageable);
+    public Page<Contract> getContractsByTenant(User tenant, Boolean showAll, Pageable pageable) {
+        if (showAll != null && showAll) {
+            return contractRepository.findByTenantId(tenant.getId(), pageable);
+        } else {
+            return contractRepository.findByTenantIdAndStatus(tenant.getId(), ContractStatus.ACTIVE, pageable);
+        }
     }
 
     @Transactional(readOnly = true)

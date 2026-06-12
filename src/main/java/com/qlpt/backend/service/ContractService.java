@@ -14,13 +14,13 @@ public interface ContractService {
 
     public Contract updateContract(UUID id, int numberOfTenants, User landlord);
 
-    public Page<Contract> getContractsByLandlord(User landlord, Pageable pageable);
+    public Page<Contract> getContractsByLandlord(User landlord, Boolean showAll, Pageable pageable);
 
-    public Page<Contract> getContractsByRoomAndLandlord(UUID roomId, User landlord, Pageable pageable);
+    public Page<Contract> getContractsByRoomAndLandlord(UUID roomId, User landlord, Boolean showAll, Pageable pageable);
 
     public Contract getContractById(UUID contractId, User user);
 
-    public Page<Contract> getContractsByTenant(User tenant, Pageable pageable);
+    public Page<Contract> getContractsByTenant(User tenant, Boolean showAll, Pageable pageable);
 
     public List<ContractExtraFee> getContractExtraFees(UUID contractId, User user);
 }

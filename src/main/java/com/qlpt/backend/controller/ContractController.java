@@ -66,21 +66,22 @@ public class ContractController {
     @GetMapping
     public ResponseEntity<Page<ContractResponse>> getContracts(
             @RequestParam(required = false) UUID roomId,
+            @RequestParam(required = false, defaultValue = "false") Boolean showAll,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10, sort = "startDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         User user = userDetails.getUser();
         Page<Contract> contracts;
         if (roomId != null) {
             if (user.getRole() == Role.LANDLORD) {
-                contracts = contractService.getContractsByRoomAndLandlord(roomId, user, pageable);
+                contracts = contractService.getContractsByRoomAndLandlord(roomId, user, showAll, pageable);
             } else {
                 throw new RuntimeException("Bạn không có quyền thực hiện chức năng này");
             }
         } else {
             if (user.getRole() == Role.LANDLORD) {
-                contracts = contractService.getContractsByLandlord(user, pageable);
+                contracts = contractService.getContractsByLandlord(user, showAll, pageable);
             } else if (user.getRole() == Role.TENANT) {
-                contracts = contractService.getContractsByTenant(user, pageable);
+                contracts = contractService.getContractsByTenant(user, showAll, pageable);
             } else {
                 throw new RuntimeException("Tài khoản của bạn không được cấp quyền thực hiện chức năng này");
             }

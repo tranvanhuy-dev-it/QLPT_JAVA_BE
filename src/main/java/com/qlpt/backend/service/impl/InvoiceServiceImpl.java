@@ -212,7 +212,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                     start,
                     end,
                     String.format("%,.0f VNĐ", resultInvoice.getTotalAmount()));
-            notificationService.createNotification(contract.getTenant(), title, content, "INVOICE_NEW");
+            notificationService.createNotification(contract.getTenant(), title, content, "INVOICE_NEW", resultInvoice.getId());
         } catch (Exception e) {
             System.err.println("Lỗi khi gửi thông báo hóa đơn mới: " + e.getMessage());
         }
@@ -256,7 +256,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                         result.getContract().getRoom().getRoomNumber(),
                         result.getBillingPeriodStart(),
                         result.getBillingPeriodEnd());
-                notificationService.createNotification(result.getContract().getTenant(), title, content, "PAYMENT_CONFIRMED");
+                notificationService.createNotification(result.getContract().getTenant(), title, content, "PAYMENT_CONFIRMED", result.getId());
             } catch (Exception e) {
                 System.err.println("Lỗi khi gửi thông báo xác nhận thanh toán: " + e.getMessage());
             }
@@ -438,6 +438,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceRepository.save(invoice);
 
         // Tạo thông báo cho chủ trọ (createNotification tự động kích hoạt WebSocket đẩy đến chủ trọ)
-        notificationService.createNotification(landlord, title, content, "PAYMENT_REPORTED");
+        notificationService.createNotification(landlord, title, content, "PAYMENT_REPORTED", invoiceId);
     }
 }

@@ -9,6 +9,7 @@ public record NotificationResponse(
     String title,
     String content,
     String type,
+    UUID referenceId,
     boolean isRead,
     LocalDateTime createdAt
 ) {
@@ -19,6 +20,7 @@ public record NotificationResponse(
             notification.getTitle(),
             notification.getContent(),
             notification.getType(),
+            notification.getReferenceId(),
             notification.isRead(),
             notification.getCreatedAt()
         );

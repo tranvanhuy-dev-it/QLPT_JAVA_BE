@@ -34,6 +34,12 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     @Override
     public NotificationResponse createNotification(User user, String title, String content, String type) {
+        return createNotification(user, title, content, type, null);
+    }
+
+    @Transactional
+    @Override
+    public NotificationResponse createNotification(User user, String title, String content, String type, UUID referenceId) {
         if (user == null) {
             throw new IllegalArgumentException("Người nhận thông báo không thể để trống");
         }
@@ -43,6 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .title(title)
                 .content(content)
                 .type(type)
+                .referenceId(referenceId)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .user(user)

@@ -8,14 +8,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "notifications", indexes = {
-    @Index(name = "idx_notifications_user_id", columnList = "user_id"),
-    @Index(name = "idx_notifications_created_at", columnList = "created_at")
+        @Index(name = "idx_notifications_user_id", columnList = "user_id"),
+        @Index(name = "idx_notifications_created_at", columnList = "created_at")
 })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Notification {
 
     @Id
@@ -30,6 +30,9 @@ public class Notification {
 
     @Column(nullable = false)
     private String type; // INVOICE_NEW, PAYMENT_CONFIRMED, CONTRACT_ACTIVE, PAYMENT_REMINDER
+
+    @Column(name = "reference_id")
+    private UUID referenceId;
 
     @Builder.Default
     @Column(name = "is_read", nullable = false)
