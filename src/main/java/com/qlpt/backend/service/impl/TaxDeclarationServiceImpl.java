@@ -12,6 +12,7 @@ import com.qlpt.backend.repository.BoardingHouseRepository;
 import com.qlpt.backend.repository.InvoiceRepository;
 import com.qlpt.backend.repository.TaxDeclarationRepository;
 import com.qlpt.backend.repository.TaxSettingRepository;
+import com.qlpt.backend.repository.UserRepository;
 import com.qlpt.backend.service.TaxDeclarationService;
 import com.qlpt.backend.utils.ExcelExportHelper;
 import org.springframework.stereotype.Service;
@@ -35,23 +36,28 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
     private final TaxDeclarationRepository taxDeclarationRepository;
     private final InvoiceRepository invoiceRepository;
     private final BoardingHouseRepository boardingHouseRepository;
+    private final UserRepository userRepository;
 
     public TaxDeclarationServiceImpl(TaxSettingRepository taxSettingRepository,
                                      TaxDeclarationRepository taxDeclarationRepository,
                                      InvoiceRepository invoiceRepository,
-                                     BoardingHouseRepository boardingHouseRepository) {
+                                     BoardingHouseRepository boardingHouseRepository,
+                                     UserRepository userRepository) {
         this.taxSettingRepository = taxSettingRepository;
         this.taxDeclarationRepository = taxDeclarationRepository;
         this.invoiceRepository = invoiceRepository;
         this.boardingHouseRepository = boardingHouseRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public TaxSetting getTaxSetting(User landlord) {
-        return taxSettingRepository.findByLandlordId(landlord.getId())
+        User dbLandlord = userRepository.findById(landlord.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
+        return taxSettingRepository.findByLandlordId(dbLandlord.getId())
                 .orElseGet(() -> {
                     TaxSetting defaultSetting = TaxSetting.builder()
-                            .landlord(landlord)
+                            .landlord(dbLandlord)
                             .annualThreshold(500000000.0) // 500 million VND
                             .vatRate(5.0) // 5% VAT
                             .pitRate(5.0) // 5% PIT
@@ -71,30 +77,34 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
 
     @Override
     public List<TaxDeclarationResponse> getDeclarations(User landlord) {
-        TaxSetting setting = getTaxSetting(landlord);
-        List<TaxDeclaration> list = taxDeclarationRepository.findByLandlordOrderBySubmittedDateDesc(landlord);
+        User dbLandlord = userRepository.findById(landlord.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
+        TaxSetting setting = getTaxSetting(dbLandlord);
+        List<TaxDeclaration> list = taxDeclarationRepository.findByLandlordOrderBySubmittedDateDesc(dbLandlord);
         
         return list.stream().map(decl -> {
-            double annualRevenue = getAnnualRevenue(landlord, decl.getYear());
+            double annualRevenue = getAnnualRevenue(dbLandlord, decl.getYear());
             return TaxDeclarationResponse.fromEntity(decl, annualRevenue, setting.getAnnualThreshold());
         }).collect(Collectors.toList());
     }
 
     @Override
     public TaxDeclarationResponse calculateTax(User landlord, TaxDeclarationRequest request) {
+        User dbLandlord = userRepository.findById(landlord.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
         LocalDate[] dates = getPeriodDates(request.getYear(), request.getPeriodType(), request.getPeriodValue());
         LocalDate start = dates[0];
         LocalDate end = dates[1];
 
-        List<Invoice> invoices = getFilteredInvoices(landlord, request.getBoardingHouseId(), start, end);
+        List<Invoice> invoices = getFilteredInvoices(dbLandlord, request.getBoardingHouseId(), start, end);
         double totalPaidInPeriod = invoices.stream()
                 .filter(inv -> inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PAID || 
                         inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PARTIALLY_PAID)
                 .mapToDouble(Invoice::getPaidAmount)
                 .sum();
 
-        double annualRevenue = getAnnualRevenue(landlord, request.getYear());
-        TaxSetting setting = getTaxSetting(landlord);
+        double annualRevenue = getAnnualRevenue(dbLandlord, request.getYear());
+        TaxSetting setting = getTaxSetting(dbLandlord);
         boolean isTaxable = annualRevenue > setting.getAnnualThreshold();
 
         double vatAmount = isTaxable ? totalPaidInPeriod * (setting.getVatRate() / 100.0) : 0.0;
@@ -137,21 +147,24 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
 
     @Override
     public TaxDeclarationResponse submitDeclaration(User landlord, TaxDeclarationRequest request) {
+        User dbLandlord = userRepository.findById(landlord.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
+        
         // Check if already declared
         boolean exists = false;
         if (request.getBoardingHouseId() != null) {
             exists = taxDeclarationRepository.existsByLandlordAndYearAndPeriodTypeAndPeriodValueAndBoardingHouseId(
-                    landlord, request.getYear(), request.getPeriodType(), request.getPeriodValue(), request.getBoardingHouseId());
+                    dbLandlord, request.getYear(), request.getPeriodType(), request.getPeriodValue(), request.getBoardingHouseId());
         } else {
             exists = taxDeclarationRepository.existsByLandlordAndYearAndPeriodTypeAndPeriodValueAndBoardingHouseIsNull(
-                    landlord, request.getYear(), request.getPeriodType(), request.getPeriodValue());
+                    dbLandlord, request.getYear(), request.getPeriodType(), request.getPeriodValue());
         }
 
         if (exists) {
             throw new RuntimeException("Tờ khai thuế cho thời gian và dãy trọ này đã được nộp trước đó.");
         }
 
-        TaxDeclarationResponse preview = calculateTax(landlord, request);
+        TaxDeclarationResponse preview = calculateTax(dbLandlord, request);
         
         BoardingHouse boardingHouse = null;
         if (request.getBoardingHouseId() != null) {
@@ -163,7 +176,7 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
         String decNum = "MST-" + now.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-" + (100000 + new java.util.Random().nextInt(900000));
 
         TaxDeclaration decl = TaxDeclaration.builder()
-                .landlord(landlord)
+                .landlord(dbLandlord)
                 .boardingHouse(boardingHouse)
                 .year(request.getYear())
                 .periodType(request.getPeriodType())
@@ -180,23 +193,25 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
 
         TaxDeclaration saved = taxDeclarationRepository.save(decl);
         
-        TaxSetting setting = getTaxSetting(landlord);
-        double annualRevenue = getAnnualRevenue(landlord, request.getYear());
+        TaxSetting setting = getTaxSetting(dbLandlord);
+        double annualRevenue = getAnnualRevenue(dbLandlord, request.getYear());
         return TaxDeclarationResponse.fromEntity(saved, annualRevenue, setting.getAnnualThreshold());
     }
 
     @Override
     public byte[] exportExcel(User landlord, UUID boardingHouseId, LocalDate start, LocalDate end) throws IOException {
-        List<Invoice> invoices = getFilteredInvoices(landlord, boardingHouseId, start, end);
+        User dbLandlord = userRepository.findById(landlord.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
+        List<Invoice> invoices = getFilteredInvoices(dbLandlord, boardingHouseId, start, end);
         String bhName = "Tất cả dãy trọ";
         if (boardingHouseId != null) {
             bhName = boardingHouseRepository.findById(boardingHouseId)
                     .map(BoardingHouse::getName)
                     .orElse("Dãy trọ");
         }
-        TaxSetting setting = getTaxSetting(landlord);
+        TaxSetting setting = getTaxSetting(dbLandlord);
         
-        return ExcelExportHelper.exportRevenueToExcel(landlord, invoices, start, end, bhName, setting.getAnnualThreshold(), setting.getVatRate(), setting.getPitRate());
+        return ExcelExportHelper.exportRevenueToExcel(dbLandlord, invoices, start, end, bhName, setting.getAnnualThreshold(), setting.getVatRate(), setting.getPitRate());
     }
 
     private double getAnnualRevenue(User landlord, int year) {
