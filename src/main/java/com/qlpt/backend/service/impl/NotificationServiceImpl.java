@@ -18,9 +18,12 @@ import java.util.UUID;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final com.qlpt.backend.config.NotificationWebSocketHandler notificationWebSocketHandler;
 
-    public NotificationServiceImpl(NotificationRepository notificationRepository) {
+    public NotificationServiceImpl(NotificationRepository notificationRepository,
+                                   com.qlpt.backend.config.NotificationWebSocketHandler notificationWebSocketHandler) {
         this.notificationRepository = notificationRepository;
+        this.notificationWebSocketHandler = notificationWebSocketHandler;
     }
 
     @Transactional
@@ -41,7 +44,16 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-        return NotificationResponse.fromEntity(saved);
+        NotificationResponse response = NotificationResponse.fromEntity(saved);
+
+        try {
+            notificationWebSocketHandler.sendNotificationToUser(user.getUsername(), response);
+        } catch (Exception e) {
+            // Ghi nhận lỗi nhưng không chặn luồng nghiệp vụ chính
+            System.err.println("Lỗi khi gửi thông báo WebSocket: " + e.getMessage());
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)

@@ -25,4 +25,6 @@ public interface InvoiceService {
     public List<BulkBillingRoomStatus> getBillingStatusForBoardingHouse(UUID bhId, User landlord);
 
     public void createBulkInvoices(BulkInvoiceCreateRequest request, User landlord);
+
+    public void notifyPayment(UUID invoiceId, User tenant);
 }

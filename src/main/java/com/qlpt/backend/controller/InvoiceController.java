@@ -57,6 +57,16 @@ public class InvoiceController {
         return ResponseEntity.ok(InvoiceResponse.fromEntity(updated));
     }
 
+    @PostMapping("/{id}/notify-payment")
+    @PreAuthorize("hasRole('TENANT')")
+    public ResponseEntity<Void> notifyPayment(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User tenant = userDetails.getUser();
+        invoiceService.notifyPayment(id, tenant);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     public ResponseEntity<Page<InvoiceResponse>> getInvoices(
             @AuthenticationPrincipal CustomUserDetails userDetails,

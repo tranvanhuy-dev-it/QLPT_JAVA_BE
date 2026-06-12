@@ -23,10 +23,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final UpgradeRequestRepository upgradeRequestRepository;
     private final UserRepository userRepository;
+    private final com.qlpt.backend.service.NotificationService notificationService;
 
-    public SubscriptionServiceImpl(UpgradeRequestRepository upgradeRequestRepository, UserRepository userRepository) {
+    public SubscriptionServiceImpl(UpgradeRequestRepository upgradeRequestRepository,
+                                   UserRepository userRepository,
+                                   com.qlpt.backend.service.NotificationService notificationService) {
         this.upgradeRequestRepository = upgradeRequestRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -52,7 +56,23 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return upgradeRequestRepository.save(request);
+        UpgradeRequest savedRequest = upgradeRequestRepository.save(request);
+
+        // Tạo thông báo cho các tài khoản ADMIN
+        try {
+            List<User> admins = userRepository.findByRole(Role.ADMIN);
+            String title = "Yêu cầu nâng cấp gói mới";
+            String content = String.format("Chủ trọ %s đã gửi yêu cầu nâng cấp gói %d tháng. Vui lòng kiểm tra và phê duyệt.",
+                    landlord.getFullName(), months);
+            for (User admin : admins) {
+                notificationService.createNotification(admin, title, content, "SUBSCRIPTION_REQUEST");
+            }
+        } catch (Exception e) {
+            // Không làm gián đoạn luồng nghiệp vụ chính của người dùng
+            System.err.println("Lỗi khi gửi thông báo nâng cấp gói cho Admin: " + e.getMessage());
+        }
+
+        return savedRequest;
     }
 
     @Override

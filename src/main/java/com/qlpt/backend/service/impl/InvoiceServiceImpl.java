@@ -407,4 +407,33 @@ public class InvoiceServiceImpl implements InvoiceService {
             createInvoice(createReq, landlord);
         }
     }
+
+    @Transactional
+    @Override
+    public void notifyPayment(UUID invoiceId, User tenant) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+
+        // Xác thực người dùng là tenant của hợp đồng
+        if (!invoice.getContract().getTenant().getId().equals(tenant.getId())) {
+            throw new RuntimeException("Bạn không có quyền gửi thông báo thanh toán cho hóa đơn này");
+        }
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new RuntimeException("Hóa đơn này đã được thanh toán hoàn tất");
+        }
+
+        User landlord = invoice.getContract().getRoom().getBoardingHouse().getLandlord();
+        String roomNumber = invoice.getContract().getRoom().getRoomNumber();
+        String bhName = invoice.getContract().getRoom().getBoardingHouse().getName();
+        String billingPeriod = String.format("%s đến %s", invoice.getBillingPeriodStart(), invoice.getBillingPeriodEnd());
+        double remainingAmount = invoice.getTotalAmount() - invoice.getPaidAmount();
+
+        String title = "Khách báo đã chuyển khoản";
+        String content = String.format("Phòng %s (dãy %s) báo đã thanh toán hóa đơn kỳ %s. Số tiền cần đóng: %,.0f VNĐ. Vui lòng kiểm tra tài khoản.",
+                roomNumber, bhName, billingPeriod, remainingAmount);
+
+        // Tạo thông báo cho chủ trọ (createNotification tự động kích hoạt WebSocket đẩy đến chủ trọ)
+        notificationService.createNotification(landlord, title, content, "PAYMENT_REPORTED");
+    }
 }

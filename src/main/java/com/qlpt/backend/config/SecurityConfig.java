@@ -53,11 +53,13 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "https://tvhquanlyphongtro.vercel.app",
                 "https://nhatro.tranvanhuy.io.vn",
+                "https://smartrent.tranvanhuy.io.vn",
                 "http://localhost",
                 "https://localhost",
                 "capacitor://localhost")); // Cho phép Vue local, production, và Capacitor Android/iOS
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "X-Requested-With"));
+        configuration
+                .setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "X-Requested-With"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -74,7 +76,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/support/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/support/**", "/error", "/ws/**").permitAll()
                         .requestMatchers("/api/subscriptions/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
