@@ -29,7 +29,7 @@ public class Notification {
     private String content;
 
     @Column(nullable = false)
-    private String type; // INVOICE_NEW, PAYMENT_CONFIRMED, CONTRACT_ACTIVE, PAYMENT_REMINDER
+    private String type; // INVOICE_NEW, PAYtMENT_CONFIRMED, CONTRACT_ACTIVE, PAYMENT_REMINDER
 
     @Column(name = "reference_id")
     private UUID referenceId;
