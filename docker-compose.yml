@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Local Database Service (PostgreSQL)
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: qlpt-postgres-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-qlpt}
+      POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT_LOCAL:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-postgres} -d ${DB_NAME:-qlpt}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qlpt-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-jdbc:postgresql://postgres-db:5432/qlpt}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres}
+      - JWT_SECRET=${JWT_SECRET:-your_super_secret_key_with_at_least_256_bits_length_here_your_super_secret_key_with_at_least_256_bits_length_here}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-5184000000}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM=${RESEND_FROM:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - IMOU_APP_ID=${IMOU_APP_ID:-}
+      - IMOU_APP_SECRET=${IMOU_APP_SECRET:-}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local
