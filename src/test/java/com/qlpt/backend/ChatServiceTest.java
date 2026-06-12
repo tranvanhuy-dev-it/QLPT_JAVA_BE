@@ -137,6 +137,7 @@ public class ChatServiceTest {
     @Test
     public void testGetChatRooms_TenantSelfHealing() {
         // GIVEN
+        when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
         Page<Contract> contractPage = new PageImpl<>(Collections.singletonList(contract));
         when(contractRepository.findByTenantIdAndStatus(tenant.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 10)))
                 .thenReturn(contractPage);
@@ -149,8 +150,6 @@ public class ChatServiceTest {
 
         ChatRoomMember member = ChatRoomMember.builder().chatRoom(chatRoom).user(tenant).build();
         when(chatRoomMemberRepository.findByChatRoom(chatRoom)).thenReturn(Collections.singletonList(member));
-        when(contractRepository.findByTenantIdAndStatus(tenant.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 1)))
-                .thenReturn(contractPage);
 
         // WHEN
         Page<ChatRoomResponse> responses = chatService.getChatRooms(tenant, Pageable.unpaged());

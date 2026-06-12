@@ -148,18 +148,8 @@ public class ChatServiceImpl implements ChatService {
                     .findFirst()
                     .orElse(null);
 
-            // Find active room dynamically from the tenant's active contract
-            Room activeRoom = null;
-            if (tenantUser != null) {
-                Page<Contract> activeContracts = contractRepository.findByTenantIdAndStatus(tenantUser.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 1));
-                if (activeContracts.hasContent()) {
-                    activeRoom = activeContracts.getContent().get(0).getRoom();
-                }
-            }
-
             return new ChatRoomResponse(
                     room.getId(),
-                    activeRoom != null ? RoomResponse.fromEntityLight(activeRoom) : null,
                     tenantUser != null ? UserResponse.fromEntityLight(tenantUser) : null,
                     landlordUser != null ? UserResponse.fromEntityLight(landlordUser) : null,
                     room.getCreatedAt(),
