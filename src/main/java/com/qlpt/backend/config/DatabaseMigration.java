@@ -19,7 +19,9 @@ public class DatabaseMigration {
                 // Drop stale columns that were removed from entities
                 String[] sqls = {
                     "ALTER TABLE contracts DROP COLUMN IF EXISTS billing_mode",
-                    "ALTER TABLE boarding_houses DROP COLUMN IF EXISTS billing_timing"
+                    "ALTER TABLE boarding_houses DROP COLUMN IF EXISTS billing_timing",
+                    "ALTER TABLE chat_rooms ALTER COLUMN room_id DROP NOT NULL",
+                    "ALTER TABLE chat_rooms ALTER COLUMN contract_id DROP NOT NULL"
                 };
                 
                 for (String sql : sqls) {

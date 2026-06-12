@@ -24,11 +24,11 @@ public class ChatRoom {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(name = "room_id", nullable = true)
     private Room room;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contract_id", nullable = false)
+    @JoinColumn(name = "contract_id", nullable = true)
     private Contract contract;
 
     @Column(name = "created_at", nullable = false)
