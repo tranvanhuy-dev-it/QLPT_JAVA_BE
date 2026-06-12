@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -31,4 +33,24 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
     @EntityGraph(attributePaths = {"contract", "contract.room", "contract.tenant", "contract.room.boardingHouse"})
     List<Invoice> findByContractRoomBoardingHouseLandlordIdAndContractRoomBoardingHouseIdAndInvoiceDateBetween(UUID landlordId, UUID boardingHouseId, java.time.LocalDate start, java.time.LocalDate end);
+
+    @Query("SELECT COALESCE(SUM(i.paidAmount), 0.0) FROM Invoice i " +
+            "WHERE i.contract.room.boardingHouse.landlord.id = :landlordId " +
+            "AND i.invoiceDate BETWEEN :start AND :end " +
+            "AND (i.status = 'PAID' OR i.status = 'PARTIALLY_PAID')")
+    double sumPaidAmountByLandlordIdAndInvoiceDateBetween(
+            @Param("landlordId") UUID landlordId,
+            @Param("start") java.time.LocalDate start,
+            @Param("end") java.time.LocalDate end);
+
+    @Query("SELECT COALESCE(SUM(i.paidAmount), 0.0) FROM Invoice i " +
+            "WHERE i.contract.room.boardingHouse.landlord.id = :landlordId " +
+            "AND i.contract.room.boardingHouse.id = :boardingHouseId " +
+            "AND i.invoiceDate BETWEEN :start AND :end " +
+            "AND (i.status = 'PAID' OR i.status = 'PARTIALLY_PAID')")
+    double sumPaidAmountByLandlordIdAndBoardingHouseIdAndInvoiceDateBetween(
+            @Param("landlordId") UUID landlordId,
+            @Param("boardingHouseId") UUID boardingHouseId,
+            @Param("start") java.time.LocalDate start,
+            @Param("end") java.time.LocalDate end);
 }

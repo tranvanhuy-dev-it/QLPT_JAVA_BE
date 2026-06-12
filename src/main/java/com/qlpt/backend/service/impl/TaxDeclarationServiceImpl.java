@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,10 +37,10 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
     private final UserRepository userRepository;
 
     public TaxDeclarationServiceImpl(TaxSettingRepository taxSettingRepository,
-                                     TaxDeclarationRepository taxDeclarationRepository,
-                                     InvoiceRepository invoiceRepository,
-                                     BoardingHouseRepository boardingHouseRepository,
-                                     UserRepository userRepository) {
+            TaxDeclarationRepository taxDeclarationRepository,
+            InvoiceRepository invoiceRepository,
+            BoardingHouseRepository boardingHouseRepository,
+            UserRepository userRepository) {
         this.taxSettingRepository = taxSettingRepository;
         this.taxDeclarationRepository = taxDeclarationRepository;
         this.invoiceRepository = invoiceRepository;
@@ -81,7 +79,7 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
         TaxSetting setting = getTaxSetting(dbLandlord);
         List<TaxDeclaration> list = taxDeclarationRepository.findByLandlordOrderBySubmittedDateDesc(dbLandlord);
-        
+
         return list.stream().map(decl -> {
             double annualRevenue = getAnnualRevenue(dbLandlord, decl.getYear());
             return TaxDeclarationResponse.fromEntity(decl, annualRevenue, setting.getAnnualThreshold());
@@ -98,7 +96,7 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
 
         List<Invoice> invoices = getFilteredInvoices(dbLandlord, request.getBoardingHouseId(), start, end);
         double totalPaidInPeriod = invoices.stream()
-                .filter(inv -> inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PAID || 
+                .filter(inv -> inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PAID ||
                         inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PARTIALLY_PAID)
                 .mapToDouble(Invoice::getPaidAmount)
                 .sum();
@@ -149,12 +147,13 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
     public TaxDeclarationResponse submitDeclaration(User landlord, TaxDeclarationRequest request) {
         User dbLandlord = userRepository.findById(landlord.getId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin tài khoản chủ trọ"));
-        
+
         // Check if already declared
         boolean exists = false;
         if (request.getBoardingHouseId() != null) {
             exists = taxDeclarationRepository.existsByLandlordAndYearAndPeriodTypeAndPeriodValueAndBoardingHouseId(
-                    dbLandlord, request.getYear(), request.getPeriodType(), request.getPeriodValue(), request.getBoardingHouseId());
+                    dbLandlord, request.getYear(), request.getPeriodType(), request.getPeriodValue(),
+                    request.getBoardingHouseId());
         } else {
             exists = taxDeclarationRepository.existsByLandlordAndYearAndPeriodTypeAndPeriodValueAndBoardingHouseIsNull(
                     dbLandlord, request.getYear(), request.getPeriodType(), request.getPeriodValue());
@@ -165,7 +164,7 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
         }
 
         TaxDeclarationResponse preview = calculateTax(dbLandlord, request);
-        
+
         BoardingHouse boardingHouse = null;
         if (request.getBoardingHouseId() != null) {
             boardingHouse = boardingHouseRepository.findById(request.getBoardingHouseId())
@@ -173,7 +172,8 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        String decNum = "MST-" + now.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-" + (100000 + new java.util.Random().nextInt(900000));
+        String decNum = "MST-" + now.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-"
+                + (100000 + new java.util.Random().nextInt(900000));
 
         TaxDeclaration decl = TaxDeclaration.builder()
                 .landlord(dbLandlord)
@@ -188,11 +188,12 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
                 .declarationNumber(decNum)
                 .status("SUBMITTED")
                 .submittedDate(now)
-                .taxAuthorityResponse("Cơ quan Thuế địa phương đã phê duyệt tự động tờ khai hợp lệ của bạn. Vui lòng thanh toán nghĩa vụ thuế trước hạn chót.")
+                .taxAuthorityResponse(
+                        "Cơ quan Thuế địa phương đã phê duyệt tự động tờ khai hợp lệ của bạn. Vui lòng thanh toán nghĩa vụ thuế trước hạn chót.")
                 .build();
 
         TaxDeclaration saved = taxDeclarationRepository.save(decl);
-        
+
         TaxSetting setting = getTaxSetting(dbLandlord);
         double annualRevenue = getAnnualRevenue(dbLandlord, request.getYear());
         return TaxDeclarationResponse.fromEntity(saved, annualRevenue, setting.getAnnualThreshold());
@@ -210,8 +211,9 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
                     .orElse("Dãy trọ");
         }
         TaxSetting setting = getTaxSetting(dbLandlord);
-        
-        return ExcelExportHelper.exportRevenueToExcel(dbLandlord, invoices, start, end, bhName, setting.getAnnualThreshold(), setting.getVatRate(), setting.getPitRate());
+
+        return ExcelExportHelper.exportRevenueToExcel(dbLandlord, invoices, start, end, bhName,
+                setting.getAnnualThreshold(), setting.getVatRate(), setting.getPitRate());
     }
 
     private double getAnnualRevenue(User landlord, int year) {
@@ -220,7 +222,7 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
         List<Invoice> annualInvoices = invoiceRepository.findByContractRoomBoardingHouseLandlordIdAndInvoiceDateBetween(
                 landlord.getId(), yearStart, yearEnd);
         return annualInvoices.stream()
-                .filter(inv -> inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PAID || 
+                .filter(inv -> inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PAID ||
                         inv.getStatus() == com.qlpt.backend.enums.InvoiceStatus.PARTIALLY_PAID)
                 .mapToDouble(Invoice::getPaidAmount)
                 .sum();
@@ -228,8 +230,9 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
 
     private List<Invoice> getFilteredInvoices(User landlord, UUID boardingHouseId, LocalDate start, LocalDate end) {
         if (boardingHouseId != null) {
-            return invoiceRepository.findByContractRoomBoardingHouseLandlordIdAndContractRoomBoardingHouseIdAndInvoiceDateBetween(
-                    landlord.getId(), boardingHouseId, start, end);
+            return invoiceRepository
+                    .findByContractRoomBoardingHouseLandlordIdAndContractRoomBoardingHouseIdAndInvoiceDateBetween(
+                            landlord.getId(), boardingHouseId, start, end);
         } else {
             return invoiceRepository.findByContractRoomBoardingHouseLandlordIdAndInvoiceDateBetween(
                     landlord.getId(), start, end);
@@ -249,16 +252,21 @@ public class TaxDeclarationServiceImpl implements TaxDeclarationService {
             start = LocalDate.of(year, 1, 1);
             end = LocalDate.of(year, 12, 31);
         }
-        return new LocalDate[]{start, end};
+        return new LocalDate[] { start, end };
     }
 
     private String convertToRoman(int number) {
         switch (number) {
-            case 1: return "I";
-            case 2: return "II";
-            case 3: return "III";
-            case 4: return "IV";
-            default: return String.valueOf(number);
+            case 1:
+                return "I";
+            case 2:
+                return "II";
+            case 3:
+                return "III";
+            case 4:
+                return "IV";
+            default:
+                return String.valueOf(number);
         }
     }
 }
