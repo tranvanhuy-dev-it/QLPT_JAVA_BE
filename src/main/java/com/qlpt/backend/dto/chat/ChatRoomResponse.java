@@ -9,6 +9,7 @@ public record ChatRoomResponse(
     UUID id,
     RoomResponse room,
     UserResponse tenant,
+    UserResponse landlord,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     String lastMessage,

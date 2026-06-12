@@ -1,6 +1,5 @@
 package com.qlpt.backend.dto.tax;
 
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -19,10 +18,10 @@ public class TaxDeclarationRequest {
     private int year;
 
     @NotBlank(message = "Loại kỳ không được để trống")
-    private String periodType; // "MONTH", "QUARTER", "YEAR"
+    private String periodType; 
 
     @Min(value = 0, message = "Giá trị kỳ không hợp lệ")
-    private int periodValue; // Month (1-12), Quarter (1-4), or 0 for year
+    private int periodValue;
 
-    private UUID boardingHouseId; // Null if for all boarding houses
+    private UUID boardingHouseId; 
 }

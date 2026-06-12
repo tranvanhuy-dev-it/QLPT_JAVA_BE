@@ -31,25 +31,23 @@ public class ChatServiceImpl implements ChatService {
     private final MessageRepository messageRepository;
     private final ChatWebSocketHandler chatWebSocketHandler;
     private final ContractRepository contractRepository;
+    private final UserRepository userRepository;
 
     public ChatServiceImpl(ChatRoomRepository chatRoomRepository,
                            ChatRoomMemberRepository chatRoomMemberRepository,
                            MessageRepository messageRepository,
                            ChatWebSocketHandler chatWebSocketHandler,
-                           ContractRepository contractRepository) {
+                           ContractRepository contractRepository,
+                           UserRepository userRepository) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.messageRepository = messageRepository;
         this.chatWebSocketHandler = chatWebSocketHandler;
         this.contractRepository = contractRepository;
+        this.userRepository = userRepository;
     }
 
-    @Transactional
-    @Override
-    public ChatRoom getOrCreateChatRoom(Contract contract) {
-        User landlord = contract.getRoom().getBoardingHouse().getLandlord();
-        User tenant = contract.getTenant();
-
+    private ChatRoom getOrCreateChatRoomBetweenUsers(User landlord, User tenant) {
         Optional<ChatRoom> existingRoom = chatRoomRepository.findChatRoomBetweenUsers(landlord, tenant);
         if (existingRoom.isPresent()) {
             return existingRoom.get();
@@ -85,15 +83,30 @@ public class ChatServiceImpl implements ChatService {
 
     @Transactional
     @Override
+    public ChatRoom getOrCreateChatRoom(Contract contract) {
+        User landlord = contract.getRoom().getBoardingHouse().getLandlord();
+        User tenant = contract.getTenant();
+        return getOrCreateChatRoomBetweenUsers(landlord, tenant);
+    }
+
+    @Transactional
+    @Override
     public Page<ChatRoomResponse> getChatRooms(User user, Pageable pageable) {
-        // Self-healing check: Make sure all active contracts have a chat room
+        // Self-healing check: Make sure all active contracts and landlord-created tenants have a chat room
         try {
             if (user.getRole() == Role.TENANT) {
+                if (user.getLandlord() != null) {
+                    getOrCreateChatRoomBetweenUsers(user.getLandlord(), user);
+                }
                 Page<Contract> tenantContracts = contractRepository.findByTenantIdAndStatus(user.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 10));
                 for (Contract c : tenantContracts.getContent()) {
                     getOrCreateChatRoom(c);
                 }
             } else if (user.getRole() == Role.LANDLORD) {
+                List<User> tenants = userRepository.findByRoleAndLandlordId(Role.TENANT, user.getId());
+                for (User t : tenants) {
+                    getOrCreateChatRoomBetweenUsers(user, t);
+                }
                 Page<Contract> landlordContracts = contractRepository.findByRoomBoardingHouseLandlordIdAndStatus(user.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 100));
                 for (Contract c : landlordContracts.getContent()) {
                     getOrCreateChatRoom(c);
@@ -118,11 +131,17 @@ public class ChatServiceImpl implements ChatService {
             // Get unread count
             long unreadCount = messageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, user);
 
-            // Find members to identify tenant
+            // Find members to identify tenant and landlord
             List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom(room);
             User tenantUser = members.stream()
                     .map(ChatRoomMember::getUser)
                     .filter(u -> u.getRole() == Role.TENANT)
+                    .findFirst()
+                    .orElse(null);
+
+            User landlordUser = members.stream()
+                    .map(ChatRoomMember::getUser)
+                    .filter(u -> u.getRole() == Role.LANDLORD)
                     .findFirst()
                     .orElse(null);
 
@@ -139,6 +158,7 @@ public class ChatServiceImpl implements ChatService {
                     room.getId(),
                     activeRoom != null ? RoomResponse.fromEntityLight(activeRoom) : null,
                     tenantUser != null ? UserResponse.fromEntityLight(tenantUser) : null,
+                    landlordUser != null ? UserResponse.fromEntityLight(landlordUser) : null,
                     room.getCreatedAt(),
                     room.getUpdatedAt(),
                     lastMessage,

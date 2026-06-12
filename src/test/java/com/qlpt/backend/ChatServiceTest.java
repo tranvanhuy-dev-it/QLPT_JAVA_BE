@@ -47,6 +47,9 @@ public class ChatServiceTest {
     @Mock
     private ContractRepository contractRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private ChatServiceImpl chatService;
 

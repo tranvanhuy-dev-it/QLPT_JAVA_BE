@@ -7,7 +7,6 @@ import com.qlpt.backend.entity.BoardingHouse;
 import com.qlpt.backend.entity.Contract;
 import com.qlpt.backend.entity.Invoice;
 import com.qlpt.backend.entity.Room;
-import com.qlpt.backend.entity.TaxDeclaration;
 import com.qlpt.backend.entity.TaxSetting;
 import com.qlpt.backend.entity.User;
 import com.qlpt.backend.enums.InvoiceStatus;
