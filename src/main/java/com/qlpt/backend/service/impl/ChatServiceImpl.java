@@ -92,22 +92,25 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     @Override
     public Page<ChatRoomResponse> getChatRooms(User user, Pageable pageable) {
+        User currentUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+
         // Self-healing check: Make sure all active contracts and landlord-created tenants have a chat room
         try {
-            if (user.getRole() == Role.TENANT) {
-                if (user.getLandlord() != null) {
-                    getOrCreateChatRoomBetweenUsers(user.getLandlord(), user);
+            if (currentUser.getRole() == Role.TENANT) {
+                if (currentUser.getLandlord() != null) {
+                    getOrCreateChatRoomBetweenUsers(currentUser.getLandlord(), currentUser);
                 }
-                Page<Contract> tenantContracts = contractRepository.findByTenantIdAndStatus(user.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 10));
+                Page<Contract> tenantContracts = contractRepository.findByTenantIdAndStatus(currentUser.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 10));
                 for (Contract c : tenantContracts.getContent()) {
                     getOrCreateChatRoom(c);
                 }
-            } else if (user.getRole() == Role.LANDLORD) {
-                List<User> tenants = userRepository.findByRoleAndLandlordId(Role.TENANT, user.getId());
+            } else if (currentUser.getRole() == Role.LANDLORD) {
+                List<User> tenants = userRepository.findByRoleAndLandlordId(Role.TENANT, currentUser.getId());
                 for (User t : tenants) {
-                    getOrCreateChatRoomBetweenUsers(user, t);
+                    getOrCreateChatRoomBetweenUsers(currentUser, t);
                 }
-                Page<Contract> landlordContracts = contractRepository.findByRoomBoardingHouseLandlordIdAndStatus(user.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 100));
+                Page<Contract> landlordContracts = contractRepository.findByRoomBoardingHouseLandlordIdAndStatus(currentUser.getId(), ContractStatus.ACTIVE, PageRequest.of(0, 100));
                 for (Contract c : landlordContracts.getContent()) {
                     getOrCreateChatRoom(c);
                 }
@@ -116,7 +119,7 @@ public class ChatServiceImpl implements ChatService {
             System.err.println("Lỗi khi tự động kiểm tra và tạo phòng chat: " + e.getMessage());
         }
 
-        Page<ChatRoom> rooms = chatRoomRepository.findByUserOrderByUpdatedAtDesc(user, pageable);
+        Page<ChatRoom> rooms = chatRoomRepository.findByUserOrderByUpdatedAtDesc(currentUser, pageable);
         return rooms.map(room -> {
             // Get last message
             Page<Message> lastMessagePage = messageRepository.findByChatRoomOrderByCreatedAtDesc(room, PageRequest.of(0, 1));
@@ -129,7 +132,7 @@ public class ChatServiceImpl implements ChatService {
             }
 
             // Get unread count
-            long unreadCount = messageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, user);
+            long unreadCount = messageRepository.countByChatRoomAndSenderNotAndIsReadFalse(room, currentUser);
 
             // Find members to identify tenant and landlord
             List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom(room);
