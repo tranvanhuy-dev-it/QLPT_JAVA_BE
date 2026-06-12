@@ -2,6 +2,7 @@ package com.qlpt.backend.service.impl;
 
 import com.qlpt.backend.service.ContractService;
 import com.qlpt.backend.service.NotificationService;
+import com.qlpt.backend.service.ChatService;
 
 import com.qlpt.backend.dto.contract.ContractCreateRequest;
 import com.qlpt.backend.entity.*;
@@ -27,6 +28,7 @@ public class ContractServiceImpl implements ContractService {
     private final ContractAddendumRepository contractAddendumRepository;
     private final ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository;
     private final NotificationService notificationService;
+    private final ChatService chatService;
 
     public ContractServiceImpl(ContractRepository contractRepository,
                            RoomRepository roomRepository,
@@ -35,7 +37,8 @@ public class ContractServiceImpl implements ContractService {
                            ContractExtraFeeRepository contractExtraFeeRepository,
                            ContractAddendumRepository contractAddendumRepository,
                            ContractAddendumExtraFeeRepository contractAddendumExtraFeeRepository,
-                           NotificationService notificationService) {
+                           NotificationService notificationService,
+                           ChatService chatService) {
         this.contractRepository = contractRepository;
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
@@ -44,6 +47,7 @@ public class ContractServiceImpl implements ContractService {
         this.contractAddendumRepository = contractAddendumRepository;
         this.contractAddendumExtraFeeRepository = contractAddendumExtraFeeRepository;
         this.notificationService = notificationService;
+        this.chatService = chatService;
     }
 
     @Transactional
@@ -133,6 +137,13 @@ public class ContractServiceImpl implements ContractService {
         }
 
         Contract resultContract = contractRepository.findWithDetailsById(savedContract.getId()).orElse(savedContract);
+
+        // Tự động tạo phòng chat khi hợp đồng kích hoạt
+        try {
+            chatService.getOrCreateChatRoom(savedContract);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tự động tạo phòng chat: " + e.getMessage());
+        }
 
         // Gửi thông báo đến người thuê
         try {
