@@ -83,7 +83,7 @@ public record BoardingHouseResponse(
             bh.getDefaultWaterRate(),
             bh.getWaterBillingType(),
             null, // extraFees
-            null, // landlord
+            UserResponse.fromEntityLight(bh.getLandlord()), // landlord
             null, // bankName
             null, // bankAccountNumber
             null, // bankAccountName

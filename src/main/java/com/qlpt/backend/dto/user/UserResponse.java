@@ -72,7 +72,7 @@ public record UserResponse(
             null, // identityCard
             null, // idCardIssueDate
             null, // idCardIssuePlace
-            null, // permanentAddress
+            user.getPermanentAddress(), // permanentAddress
             null, // createdAt
             null, // subscriptionExpiredAt
             null, // imouAppId
