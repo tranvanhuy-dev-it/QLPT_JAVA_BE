@@ -10,6 +10,7 @@ import com.qlpt.backend.service.TaxDeclarationService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -69,17 +70,24 @@ public class TaxDeclarationController {
     }
 
     @GetMapping("/export-excel")
-    public ResponseEntity<byte[]> exportExcel(
+    public ResponseEntity<?> exportExcel(
             @RequestParam(required = false) UUID boardingHouseId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @AuthenticationPrincipal CustomUserDetails userDetails) throws IOException {
-        User landlord = userDetails.getUser();
-        byte[] excelBytes = taxDeclarationService.exportExcel(landlord, boardingHouseId, startDate, endDate);
-        
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bao_cao_doanh_thu.xlsx\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(excelBytes);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            User landlord = userDetails.getUser();
+            byte[] excelBytes = taxDeclarationService.exportExcel(landlord, boardingHouseId, startDate, endDate);
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bao_cao_doanh_thu.xlsx\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(excelBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(java.util.Collections.singletonMap("message", e.getMessage() != null ? e.getMessage() : e.toString()));
+        }
     }
 }
