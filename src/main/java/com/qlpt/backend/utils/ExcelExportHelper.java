@@ -132,7 +132,7 @@ public class ExcelExportHelper {
             try {
                 summarySheet.autoSizeColumn(1);
                 summarySheet.autoSizeColumn(2);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 summarySheet.setColumnWidth(1, 30 * 256);
                 summarySheet.setColumnWidth(2, 20 * 256);
             }
@@ -249,7 +249,7 @@ public class ExcelExportHelper {
             for (int i = 0; i < headers.length; i++) {
                 try {
                     detailSheet.autoSizeColumn(i);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     detailSheet.setColumnWidth(i, 15 * 256);
                 }
             }
